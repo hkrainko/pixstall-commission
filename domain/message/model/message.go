@@ -3,8 +3,8 @@ package model
 import "time"
 
 type Message struct {
-	ID               string
-	OpenCommissionID string       `json:""`
+	ID               string       `json:"id"`
+	OpenCommissionID string       `json:"openCommissionId"`
 	CreateTime       time.Time    `json:"createTime"`
 	LastUpdatedTime  time.Time    `json:"completeTime"`
 	State            MessageState `json:"state"`
@@ -28,7 +28,7 @@ type ImageMessage struct {
 
 type SystemMessage struct {
 	Message
-	Text      *string `json:"text"`
+	Text *string `json:"text"`
 }
 
 type MessageState string

@@ -79,17 +79,9 @@ func main() {
 
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctr := InitAuthController(grpcConn, dbClient.Database("pixstall-commission"))
-		authGroup.GET("/url", ctr.GetAuthURL)
-		authGroup.GET("/callback", ctr.AuthCallback)
+		ctr := InitCommissionController(db, awsS3)
+		print(commissionGroup, ctr, userIDExtractor)
+		//authGroup.GET("/url", ctr.)
+		//authGroup.GET("/callback", ctr.AuthCallback)
 	}
-
-
-
-
-
-
-
-
-
 }
