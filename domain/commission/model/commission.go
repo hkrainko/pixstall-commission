@@ -7,8 +7,13 @@ import (
 type Commission struct {
 	ID               string `json:"id"`
 	OpenCommissionID string `json:"openCommissionId"`
-	ArtistID         string `json:"artistId"`
-	RequesterID      string `json:"requesterId"`
+
+	ArtistID             string  `json:"artistId"`
+	ArtistName           string  `json:"artistName"`
+	ArtistProfilePath    *string `json:"artistProfilePath"`
+	RequesterID          string  `json:"requesterId"`
+	RequesterName        string  `json:"requesterName"`
+	RequesterProfilePath *string `json:"requesterProfilePath"`
 
 	Price         Price    `json:"price"`
 	DayNeed       int      `json:"dayNeed"`
@@ -22,9 +27,10 @@ type Commission struct {
 	Anonymous     bool     `json:"anonymous"`
 	RefImagePaths []string `json:"refImagePaths"`
 
-	CreateTime   time.Time       `json:"createTime"`
-	CompleteTime time.Time       `json:"completeTime"`
-	State        CommissionState `json:"state"`
+	CreateTime     time.Time       `json:"createTime"`
+	CompleteTime   *time.Time      `json:"completeTime"`
+	LastUpdateTime time.Time       `json:"lastUpdateTime"`
+	State          CommissionState `json:"state"`
 }
 
 type CommissionState string
