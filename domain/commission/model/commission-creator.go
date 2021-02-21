@@ -5,21 +5,21 @@ import (
 )
 
 type CommissionCreator struct {
-	OpenCommissionID string   `json:"openCommissionId"`
-	ArtistID         string   `json:"artistID"`
-	RequesterID      string   `json:"requesterID"`
-	Price            Price    `json:"price"`
-	DayNeed          int      `json:"dayNeed"`
-	Size             *Size    `json:"size"`
-	Resolution       *float64 `json:"resolution"`
-	ExportFormat     *string  `json:"exportFormat"`
-	Desc             string   `json:"desc"`
-	PaymentMethod    string   `json:"paymentMethod"`
-	IsR18            bool     `json:"isR18"`
-	BePrivate        bool     `json:"bePrivate"`
-	Anonymous        bool     `json:"anonymous"`
-	RefImages        []image.Image
-	RefImagePaths    []string `json:"refImagePaths"`
+	OpenCommissionID     string   `json:"openCommissionId"`
+	ArtistID             string   `json:"artistID"`
+	RequesterID          string   `json:"requesterID"`
+	Price                Price    `json:"price"`
+	DayNeed              int      `json:"dayNeed"`
+	Size                 *Size    `json:"size"`
+	Resolution           *float64 `json:"resolution"`
+	ExportFormat         *string  `json:"exportFormat"`
+	Desc                 string   `json:"desc"`
+	PaymentMethod        string   `json:"paymentMethod"`
+	IsR18                bool     `json:"isR18"`
+	BePrivate            bool     `json:"bePrivate"`
+	Anonymous            bool     `json:"anonymous"`
+	RefImages            []image.Image
+	RefImagePaths        []string `json:"refImagePaths"`
 }
 
 type Price struct {

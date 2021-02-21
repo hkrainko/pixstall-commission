@@ -56,9 +56,9 @@ func main() {
 		log.Fatalf("Failed to connect to RabbitMQ %v", err)
 	}
 	defer conn.Close()
-	//artistMsgBroker := InitArtistMessageBroker(db, conn, awsS3)
-	//go artistMsgBroker.StartArtistQueue()
-	//defer artistMsgBroker.StopArtistQueue()
+	commMsgBroker := InitCommissionMessageBroker(db, conn, awsS3)
+	go commMsgBroker.StartQueue()
+	defer commMsgBroker.StopQueue()
 
 	//Gin
 	r := gin.Default()
