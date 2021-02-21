@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
 	"pixstall-commission/domain/image"
+	model2 "pixstall-commission/domain/image/model"
 )
 
 type commissionUseCase struct {
@@ -20,7 +22,21 @@ func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo) commis
 }
 
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*string, error) {
-	panic("implement me")
+	// Upload
+	if len(creator.RefImages) > 0 {
+		pathImages := make([]model2.PathImage, 0, len(creator.RefImages))
+		for _, refImage := range creator.RefImages {
+			pathImages = append(pathImages, model2.PathImage{
+				Path:  "commissions/",
+				Name:  "RF-" + creator.RequesterID + "-" + uuid.NewString(),
+				Image: refImage,
+			})
+		}
+		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
+		if err == nil {
+			creator.RefImagePaths = paths
+		}
+	}
 }
 
 func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string) (*[]model.Commission, error) {
