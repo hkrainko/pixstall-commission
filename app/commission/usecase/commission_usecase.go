@@ -19,7 +19,7 @@ func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo) commis
 	}
 }
 
-func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) error {
+func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*string, error) {
 	panic("implement me")
 }
 

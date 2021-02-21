@@ -123,5 +123,5 @@ func (c CommissionMessageBroker) CreateCommission(ctx context.Context, body []by
 	if err != nil {
 		return err
 	}
-	return c.commUseCase.AddCommission(ctx, req.CommissionCreator)
+	return nil
 }
