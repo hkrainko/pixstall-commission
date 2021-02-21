@@ -79,9 +79,12 @@ func main() {
 
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctr := InitCommissionController(db, awsS3)
-		print(commissionGroup, ctr, userIDExtractor)
-		//authGroup.GET("/url", ctr.)
-		//authGroup.GET("/callback", ctr.AuthCallback)
+		ctrl := InitCommissionController(db, awsS3)
+		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
+		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
+		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)
 	}
+
+	err = r.Run(":9004")
+	print(err)
 }

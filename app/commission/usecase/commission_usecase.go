@@ -23,7 +23,7 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 	panic("implement me")
 }
 
-func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string) (*model.Commission, error) {
+func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string) (*[]model.Commission, error) {
 	panic("implement me")
 }
 
