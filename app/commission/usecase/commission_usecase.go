@@ -37,6 +37,7 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 			creator.RefImagePaths = paths
 		}
 	}
+	return nil, nil
 }
 
 func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string) (*[]model.Commission, error) {

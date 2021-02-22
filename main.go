@@ -56,6 +56,23 @@ func main() {
 		log.Fatalf("Failed to connect to RabbitMQ %v", err)
 	}
 	defer conn.Close()
+	ch, err := conn.Channel()
+	if err != nil {
+		log.Fatalf("Failed to create channel %v", err)
+	}
+	err = ch.ExchangeDeclare(
+		"commission",
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatalf("Failed to create exchange %v", err)
+	}
+
 	commMsgBroker := InitCommissionMessageBroker(db, conn, awsS3)
 	go commMsgBroker.StartQueue()
 	defer commMsgBroker.StopQueue()
