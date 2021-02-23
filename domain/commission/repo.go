@@ -6,6 +6,7 @@ import (
 )
 
 type Repo interface {
-	AddCommission(ctx context.Context, creator model.CommissionCreator) (*string, error)
+	AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error)
+	GetCommission(ctx context.Context, commId string) (*model.Commission, error)
 	UpdateCommission(ctx context.Context, updater model.CommissionUpdater) error
 }

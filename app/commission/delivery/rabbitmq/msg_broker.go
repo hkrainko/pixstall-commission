@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
-	create_commission "pixstall-commission/app/commission/delivery/model/create-commission"
+	"pixstall-commission/app/commission/delivery/rabbitmq/model"
 	"pixstall-commission/domain/commission"
+	dModel "pixstall-commission/domain/commission/model"
 	"time"
 )
 
@@ -31,22 +32,22 @@ func NewCommissionMessageBroker(commUseCase commission.UseCase, conn *amqp.Conne
 	}
 }
 
-func (c CommissionMessageBroker) StartQueue() {
+func (c CommissionMessageBroker) StartUpdateCommissionQueue() {
 	//TODO
 	q, err := c.ch.QueueDeclare(
-		"commission_artist", // name
-		true,                             // durable
-		false,                            // delete when unused
-		false,                            // exclusive
-		false,                            // no-wait
-		nil,                              // arguments
+		"commission-update", // name
+		true,                // durable
+		false,               // delete when unused
+		false,               // exclusive
+		false,               // no-wait
+		nil,                 // arguments
 	)
 	if err != nil {
 		log.Fatalf("Failed to declare a queue %v", err)
 	}
 	err = c.ch.QueueBind(
 		q.Name,
-		"commission.new",
+		"commission.cmd.update",
 		"commission",
 		false,
 		nil,
@@ -94,8 +95,8 @@ func (c CommissionMessageBroker) StartQueue() {
 			}()
 
 			switch d.RoutingKey {
-			case "commission.new":
-				err := c.CreateCommission(ctx, d.Body)
+			case "commission.cmd.update":
+				err := c.UpdateCommission(ctx, d.Body)
 				if err != nil {
 					//TODO: error handling, store it ?
 				}
@@ -109,7 +110,85 @@ func (c CommissionMessageBroker) StartQueue() {
 	<-forever
 }
 
-func (c CommissionMessageBroker) StopQueue() {
+func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
+	//TODO
+	q, err := c.ch.QueueDeclare(
+		"commission-validated", // name
+		true,                   // durable
+		false,                  // delete when unused
+		false,                  // exclusive
+		false,                  // no-wait
+		nil,                    // arguments
+	)
+	if err != nil {
+		log.Fatalf("Failed to declare a queue %v", err)
+	}
+	err = c.ch.QueueBind(
+		q.Name,
+		"commission.event.validated",
+		"commission",
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatalf("Failed to bind queue %v", err)
+	}
+
+	msgs, err := c.ch.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		log.Fatalf("Failed to register a consumer %v", err)
+	}
+
+	forever := make(chan bool)
+
+	go func() {
+		for d := range msgs {
+			log.Printf("Received a message: %s", d.Body)
+			d.Ack(false)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						switch ctx.Err() {
+						case context.DeadlineExceeded:
+							log.Println("context.DeadlineExceeded")
+						case context.Canceled:
+							log.Println("context.Canceled")
+						default:
+							log.Println("default")
+						}
+						return // returning not to leak the goroutine
+					}
+				}
+			}()
+
+			switch d.RoutingKey {
+			case "commission.event.validated":
+				err := c.CommissionValidated(ctx, d.Body)
+				if err != nil {
+					//TODO: error handling, store it ?
+				}
+				cancel()
+			default:
+				cancel()
+			}
+		}
+	}()
+
+	<-forever
+}
+
+func (c CommissionMessageBroker) StopAllQueues() {
 	err := c.ch.Close()
 	if err != nil {
 		log.Printf("StopCommissionQueue err %v", err)
@@ -117,11 +196,30 @@ func (c CommissionMessageBroker) StopQueue() {
 	log.Printf("StopCommissionQueue success")
 }
 
-func (c CommissionMessageBroker) CreateCommission(ctx context.Context, body []byte) error {
-	req := create_commission.Request{}
+func (c CommissionMessageBroker) UpdateCommission(ctx context.Context, body []byte) error {
+	req := model.CommissionUpdater{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
 		return err
 	}
-	return nil
+	return c.commUseCase.UpdateCommissions(ctx, req.Updater)
+}
+
+func (c CommissionMessageBroker) CommissionValidated(ctx context.Context, body []byte) error {
+	req := model.ValidatedCommission{}
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		return err
+	}
+	var state dModel.CommissionState
+	if req.IsValid {
+		state = dModel.CommissionStatePendingArtistApproval
+	} else {
+		state = dModel.CommissionStateInValid
+	}
+	updater := dModel.CommissionUpdater{
+		ID:    req.ID,
+		State: &state,
+	}
+	return c.commUseCase.UpdateCommissions(ctx, updater)
 }

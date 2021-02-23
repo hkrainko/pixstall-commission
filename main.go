@@ -74,8 +74,9 @@ func main() {
 	}
 
 	commMsgBroker := InitCommissionMessageBroker(db, conn, awsS3)
-	go commMsgBroker.StartQueue()
-	defer commMsgBroker.StopQueue()
+	go commMsgBroker.StartUpdateCommissionQueue()
+	go commMsgBroker.StartCommissionValidatedQueue()
+	defer commMsgBroker.StopAllQueues()
 
 	//Gin
 	r := gin.Default()

@@ -36,7 +36,9 @@ type Commission struct {
 type CommissionState string
 
 const (
-	CommissionStatePending        CommissionState = "P"
-	CommissionStateRejectByArtist CommissionState = "RJ_BY_ARTIST"
-	CommissionStateRejectByClient CommissionState = "RJ_BY_CLIENT"
+	CommissionStatePendingValidation     CommissionState = "PENDING_VALIDATION"
+	CommissionStateInValid               CommissionState = "INVALID"
+	CommissionStatePendingArtistApproval CommissionState = "PENDING_ARTIST_APPROVAL"
+	CommissionStateRejectByArtist        CommissionState = "REJECT_BY_ARTIST"
+	CommissionStateRejectByClient        CommissionState = "REJECT_BY_CLIENT"
 )

@@ -13,6 +13,7 @@ type Commission struct {
 }
 
 func NewFromCommissionCreator(d model.CommissionCreator) Commission {
+	now := time.Now()
 	return Commission{
 		ObjectID: primitive.ObjectID{},
 		Commission: model.Commission{
@@ -22,23 +23,47 @@ func NewFromCommissionCreator(d model.CommissionCreator) Commission {
 			RequesterID:      d.RequesterID,
 			Price:            d.Price,
 			DayNeed:          d.DayNeed,
-			Size: &model.Size{
-				Width:  0,
-				Height: 0,
-				Unit:   "",
-			},
-			Resolution:     nil,
-			ExportFormat:   nil,
-			Desc:           "",
-			PaymentMethod:  "",
-			IsR18:          false,
-			BePrivate:      false,
-			Anonymous:      false,
-			RefImagePaths:  nil,
-			CreateTime:     time.Time{},
-			CompleteTime:   &time.Time{},
-			LastUpdateTime: time.Time{},
-			State:          "",
+			Size:             d.Size,
+			Resolution:       d.Resolution,
+			ExportFormat:     d.ExportFormat,
+			Desc:             d.Desc,
+			PaymentMethod:    d.PaymentMethod,
+			IsR18:            d.IsR18,
+			BePrivate:        d.BePrivate,
+			Anonymous:        d.Anonymous,
+			RefImagePaths:    d.RefImagePaths,
+			CreateTime:       now,
+			CompleteTime:     nil,
+			LastUpdateTime:   now,
+			State:            model.CommissionStatePendingValidation,
 		},
+	}
+}
+
+func (c Commission) ToDomainCommission() model.Commission {
+	return model.Commission{
+		ID:                   c.ID,
+		OpenCommissionID:     c.OpenCommissionID,
+		ArtistID:             c.ArtistID,
+		ArtistName:           c.ArtistName,
+		ArtistProfilePath:    c.ArtistProfilePath,
+		RequesterID:          c.RequesterID,
+		RequesterName:        c.RequesterName,
+		RequesterProfilePath: c.RequesterProfilePath,
+		Price:                c.Price,
+		DayNeed:              c.DayNeed,
+		Size:                 c.Size,
+		Resolution:           c.Resolution,
+		ExportFormat:         c.ExportFormat,
+		Desc:                 c.Desc,
+		PaymentMethod:        c.PaymentMethod,
+		IsR18:                c.IsR18,
+		BePrivate:            c.BePrivate,
+		Anonymous:            c.Anonymous,
+		RefImagePaths:        c.RefImagePaths,
+		CreateTime:           c.CreateTime,
+		CompleteTime:         c.CompleteTime,
+		LastUpdateTime:       c.LastUpdateTime,
+		State:                c.State,
 	}
 }
