@@ -47,8 +47,14 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 	return newComm, nil
 }
 
-func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string) (*[]model.Commission, error) {
-	panic("implement me")
+func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error) {
+	filter.RequesterID = &requesterID
+	return c.commRepo.GetCommissions(ctx, filter, sorter)
+}
+
+func (c commissionUseCase) GetWorks(ctx context.Context, artistID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error) {
+	filter.ArtistID = &artistID
+	return c.commRepo.GetCommissions(ctx, filter, sorter)
 }
 
 func (c commissionUseCase) UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error {
@@ -60,7 +66,7 @@ func (c commissionUseCase) UpdateCommissions(ctx context.Context, updater model.
 	if updater.State != nil {
 		switch *updater.State {
 		case model.CommissionStatePendingArtistApproval, model.CommissionStateInValid:
-			//Don't change to approved is state != PendingValidation
+			//Don't change to approved if state != PendingValidation
 			if dComm.State != model.CommissionStatePendingValidation {
 				updater.State = nil
 			}

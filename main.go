@@ -97,7 +97,7 @@ func main() {
 
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctrl := InitCommissionController(db, awsS3)
+		ctrl := InitCommissionController(db, awsS3, conn)
 		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
 		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)

@@ -29,8 +29,26 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 		return
 	}
 
-	//TODO: trigger by...
-	commissions, err := c.commUseCase.GetCommissions(ctx, tokenUserID)
+	filter := model.CommissionFilter{
+		ArtistID:       nil,
+		RequesterID:    nil,
+		Count:          nil,
+		Offset:         nil,
+		PriceFrom:      nil,
+		PriceTo:        nil,
+		CreateTimeFrom: nil,
+		CreateTimeTo:   nil,
+		State:          nil,
+	}
+	
+	sorter := model.CommissionSorter{
+		Price:          nil,
+		State:          nil,
+		CreateTime:     nil,
+		LastUpdateTime: nil,
+	}
+	
+	commissions, err := c.commUseCase.GetCommissions(ctx, tokenUserID, filter, sorter)
 	if err != nil {
 		ctx.JSON(get_commissions.NewErrorResponse(err))
 		return
@@ -142,12 +160,12 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 		creator.RefImages = *refImage
 	}
 	
-	commID, err := c.commUseCase.AddCommission(ctx, creator)
+	comm, err := c.commUseCase.AddCommission(ctx, creator)
 	if err != nil {
 		ctx.JSON(add_commission.NewErrorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, add_commission.NewResponse(*commID))
+	ctx.JSON(http.StatusOK, add_commission.NewResponse(comm.ID))
 }
 
 // Private methods
