@@ -102,6 +102,7 @@ func main() {
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
 		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)
 		commissionGroup.POST("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.AddCommission)
+		commissionGroup.PATCH("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.UpdateCommission)
 	}
 
 	err = r.Run(":9004")

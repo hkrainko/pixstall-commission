@@ -271,3 +271,8 @@ func getRefImages(ctx *gin.Context) (*[]image.Image, error) {
 	}
 	return &images, nil
 }
+
+func (c CommissionController) UpdateCommission(ctx *gin.Context) {
+
+
+}
