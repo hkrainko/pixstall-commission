@@ -41,7 +41,7 @@ func (m mongoCommissionRepo) AddCommission(ctx context.Context, creator dModel.C
 
 func (m mongoCommissionRepo) GetCommission(ctx context.Context, commId string) (*dModel.Commission, error) {
 	mongoComm := dao.Commission{}
-	err :=  m.collection.FindOne(ctx, bson.M{"": ""}).Decode(&mongoComm)
+	err := m.collection.FindOne(ctx, bson.M{"": ""}).Decode(&mongoComm)
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:
@@ -81,6 +81,14 @@ func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.C
 	return &dComm, nil
 }
 
-func (m mongoCommissionRepo) UpdateCommission(ctx context.Context, updater dModel.CommissionUpdater) error {
-	panic("implement me")
+func (m mongoCommissionRepo) UpdateCommission(ctx context.Context, commUpdater dModel.CommissionUpdater) error {
+	filter := bson.M{
+		"id": commUpdater.ID,
+	}
+	updater := dao.NewUpdaterFromCommissionUpdater(commUpdater)
+	_, err := m.collection.UpdateOne(ctx, filter, updater)
+	if err != nil {
+		return dModel.CommissionErrorUnknown
+	}
+	return nil
 }

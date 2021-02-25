@@ -1,36 +1,39 @@
 package model
 
 import (
+	"pixstall-commission/domain/message/model"
 	"time"
 )
 
 type Commission struct {
-	ID               string `json:"id"`
-	OpenCommissionID string `json:"openCommissionId"`
+	ID               string `json:"id" bson:"id"`
+	OpenCommissionID string `json:"openCommissionId" bson:"openCommissionId"`
 
-	ArtistID             string  `json:"artistId"`
-	ArtistName           string  `json:"artistName"`
-	ArtistProfilePath    *string `json:"artistProfilePath"`
-	RequesterID          string  `json:"requesterId"`
-	RequesterName        string  `json:"requesterName"`
-	RequesterProfilePath *string `json:"requesterProfilePath"`
+	ArtistID             string  `json:"artistId" bson:"artistId"`
+	ArtistName           string  `json:"artistName" bson:"artistName"`
+	ArtistProfilePath    *string `json:"artistProfilePath" bson:"artistProfilePath,omitempty"`
+	RequesterID          string  `json:"requesterId" bson:"requesterId"`
+	RequesterName        string  `json:"requesterName" bson:"requesterName"`
+	RequesterProfilePath *string `json:"requesterProfilePath" bson:"requesterProfilePath,omitempty"`
 
-	Price         Price    `json:"price"`
-	DayNeed       int      `json:"dayNeed"`
-	Size          *Size    `json:"size"`
-	Resolution    *float64 `json:"resolution"`
-	ExportFormat  *string  `json:"exportFormat"`
-	Desc          string   `json:"desc"`
-	PaymentMethod string   `json:"paymentMethod"`
-	IsR18         bool     `json:"isR18"`
-	BePrivate     bool     `json:"bePrivate"`
-	Anonymous     bool     `json:"anonymous"`
-	RefImagePaths []string `json:"refImagePaths"`
+	Price         Price    `json:"price" bson:"price"`
+	DayNeed       int      `json:"dayNeed" bson:"dayNeed"`
+	Size          *Size    `json:"size" bson:"size,omitempty"`
+	Resolution    *float64 `json:"resolution" bson:"resolution,omitempty"`
+	ExportFormat  *string  `json:"exportFormat" bson:"exportFormat,omitempty"`
+	Desc          string   `json:"desc" bson:"desc"`
+	PaymentMethod string   `json:"paymentMethod" bson:"paymentMethod"`
+	IsR18         bool     `json:"isR18" bson:"isR18"`
+	BePrivate     bool     `json:"bePrivate" bson:"bePrivate"`
+	Anonymous     bool     `json:"anonymous" bson:"anonymous"`
+	RefImagePaths []string `json:"refImagePaths" bson:"RefImagePaths"`
 
-	CreateTime     time.Time       `json:"createTime"`
-	CompleteTime   *time.Time      `json:"completeTime"`
-	LastUpdateTime time.Time       `json:"lastUpdateTime"`
-	State          CommissionState `json:"state"`
+	Messages []model.Message `json:"messages" bson:"messages"`
+
+	CreateTime     time.Time       `json:"createTime" bson:"createTime"`
+	CompleteTime   *time.Time      `json:"completeTime" bson:"completeTime,omitempty"`
+	LastUpdateTime time.Time       `json:"lastUpdateTime" bson:"lastUpdateTime"`
+	State          CommissionState `json:"state" bson:"state"`
 }
 
 type CommissionState string
