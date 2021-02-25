@@ -9,8 +9,8 @@ type CommissionFilter struct {
 	Offset         *int64
 	PriceFrom      *Price
 	PriceTo        *Price
-	DayNeedFrom    *DayNeed
-	DayNeedTo      *DayNeed
+	DayNeedFrom    *int
+	DayNeedTo      *int
 	CreateTimeFrom *time.Time
 	CreateTimeTo   *time.Time
 	State          *CommissionState
