@@ -26,7 +26,7 @@ type Commission struct {
 	IsR18         bool     `json:"isR18" bson:"isR18"`
 	BePrivate     bool     `json:"bePrivate" bson:"bePrivate"`
 	Anonymous     bool     `json:"anonymous" bson:"anonymous"`
-	RefImagePaths []string `json:"refImagePaths" bson:"RefImagePaths"`
+	RefImagePaths []string `json:"refImagePaths" bson:"refImagePaths"`
 
 	Messages []model.Message `json:"messages" bson:"messages"`
 

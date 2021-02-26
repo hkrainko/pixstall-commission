@@ -4,6 +4,8 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"net/http"
 	add_commission "pixstall-commission/app/commission/delivery/model/add-commission"
 	get_commissions "pixstall-commission/app/commission/delivery/model/get-commissions"
