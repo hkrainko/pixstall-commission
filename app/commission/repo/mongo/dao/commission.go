@@ -17,7 +17,7 @@ func NewFromCommissionCreator(d model.CommissionCreator) Commission {
 	return Commission{
 		ObjectID: primitive.ObjectID{},
 		Commission: model.Commission{
-			ID:               "CM-" + "-" + uuid.NewString(),
+			ID:               "CM-" + uuid.NewString(),
 			OpenCommissionID: d.OpenCommissionID,
 			ArtistID:         d.ArtistID,
 			RequesterID:      d.RequesterID,
