@@ -12,15 +12,15 @@ import (
 )
 
 type commissionUseCase struct {
-	commRepo commission.Repo
-	imageRepo image.Repo
+	commRepo      commission.Repo
+	imageRepo     image.Repo
 	msgBrokerRepo msgBroker.Repo
 }
 
 func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo, msgBrokerRepo msgBroker.Repo) commission.UseCase {
 	return &commissionUseCase{
-		commRepo: commRepo,
-		imageRepo: imageRepo,
+		commRepo:      commRepo,
+		imageRepo:     imageRepo,
 		msgBrokerRepo: msgBrokerRepo,
 	}
 }
@@ -34,6 +34,10 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 	newComm, err := c.commRepo.AddCommission(ctx, creator)
 	if err != nil {
 		return nil, err
+	}
+	err = c.msgBrokerRepo.SendCommissionCreatedMessage(ctx, *newComm)
+	if err != nil {
+		print(err)
 	}
 	return newComm, nil
 }
@@ -49,23 +53,42 @@ func (c commissionUseCase) GetWorks(ctx context.Context, artistID string, filter
 }
 
 func (c commissionUseCase) UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error {
+	return c.commRepo.UpdateCommission(ctx, updater)
+}
 
-	dComm, err := c.commRepo.GetCommission(ctx, updater.ID)
+func (c commissionUseCase) OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error {
+	comm, err := c.commRepo.GetCommission(ctx, validation.ID)
 	if err != nil {
 		return err
 	}
-	if updater.State != nil {
-		switch *updater.State {
-		case model.CommissionStatePendingArtistApproval, model.CommissionStateInValid:
-			//Don't change to approved if state != PendingValidation
-			if dComm.State != model.CommissionStatePendingValidation {
-				updater.State = nil
-			}
-		default:
-			break
-		}
+	if comm.State != model.CommissionStatePendingValidation {
+		return nil
 	}
+	updater := model.CommissionUpdater{ID: validation.ID}
+	if validation.IsValid {
+		updater = c.getCommValidationOpenCommUpdater(comm.ValidationHistory, updater)
+	} else {
+		state := model.CommissionStateInValidatedDueToOpenCommission
+		updater.State = &state
+	}
+	return c.commRepo.UpdateCommission(ctx, updater)
+}
 
+func (c commissionUseCase) UsersValidation(ctx context.Context, validation model.CommissionUsersValidation) error {
+	comm, err := c.commRepo.GetCommission(ctx, validation.CommID)
+	if err != nil {
+		return err
+	}
+	if comm.State != model.CommissionStatePendingValidation {
+		return nil
+	}
+	updater := model.CommissionUpdater{ID: validation.CommID}
+	if validation.IsValid {
+		updater = c.getCommValidationUsersUpdater(comm.ValidationHistory, updater, validation)
+	} else {
+		state := model.CommissionStateInValidatedDueToUsers
+		updater.State = &state
+	}
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
@@ -94,4 +117,50 @@ func (c commissionUseCase) storeRefImage(ctx context.Context, creator model.Comm
 		}
 	}
 	return nil, errors.New("storeRefImage failed")
+}
+
+func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater) model.CommissionUpdater {
+	v := model.CommissionValidationOpenCommission
+	if isCommValid := c.isCommValidationCompletable(
+		history, v,
+	); isCommValid {
+		newState := model.CommissionStatePendingArtistApproval
+		updater.State = &newState
+	}
+	updater.Validation = &v
+	return updater
+}
+
+func (c commissionUseCase) getCommValidationUsersUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionUsersValidation) model.CommissionUpdater {
+	v := model.CommissionValidationOpenCommission
+	if isCommValid := c.isCommValidationCompletable(
+		history, v,
+	); isCommValid {
+		newState := model.CommissionStatePendingArtistApproval
+		updater.State = &newState
+	}
+	updater.ArtistName = validation.ArtistName
+	updater.ArtistProfilePath = validation.ArtistProfilePath
+	updater.RequesterName = validation.RequesterName
+	updater.RequesterProfilePath = validation.RequesterProfilePath
+	updater.Validation = &v
+	return updater
+}
+
+func (c commissionUseCase) isCommValidationCompletable(validationHistory []model.CommissionValidation, newValidation model.CommissionValidation) bool {
+	switch newValidation {
+	case model.CommissionValidationOpenCommission:
+		for _, hV := range validationHistory {
+			if hV == model.CommissionValidationUsers {
+				return true
+			}
+		}
+	case model.CommissionValidationUsers:
+		for _, hV := range validationHistory {
+			if hV == model.CommissionValidationOpenCommission {
+				return true
+			}
+		}
+	}
+	return false
 }

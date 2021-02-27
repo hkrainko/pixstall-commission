@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
-	model2 "pixstall-commission/app/msg-broker/repo/rabbitmq/model"
+	model2 "pixstall-commission/app/msg-broker/repo/rabbitmq/msg"
 	"pixstall-commission/domain/commission/model"
 	msg_broker "pixstall-commission/domain/msg-broker"
 )

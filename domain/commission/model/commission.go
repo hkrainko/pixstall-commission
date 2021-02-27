@@ -30,18 +30,27 @@ type Commission struct {
 
 	Messages []model.Message `json:"messages" bson:"messages"`
 
-	CreateTime     time.Time       `json:"createTime" bson:"createTime"`
-	CompleteTime   *time.Time      `json:"completeTime" bson:"completeTime,omitempty"`
-	LastUpdateTime time.Time       `json:"lastUpdateTime" bson:"lastUpdateTime"`
-	State          CommissionState `json:"state" bson:"state"`
+	CreateTime         time.Time              `json:"createTime" bson:"createTime"`
+	CompleteTime       *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
+	LastUpdateTime     time.Time              `json:"lastUpdateTime" bson:"lastUpdateTime"`
+	ValidationHistory []CommissionValidation `bson:"validationHistory"`
+	State              CommissionState        `json:"state" bson:"state"`
 }
 
 type CommissionState string
 
 const (
-	CommissionStatePendingValidation     CommissionState = "PENDING_VALIDATION"
-	CommissionStateInValid               CommissionState = "INVALID"
-	CommissionStatePendingArtistApproval CommissionState = "PENDING_ARTIST_APPROVAL"
-	CommissionStateRejectByArtist        CommissionState = "REJECT_BY_ARTIST"
-	CommissionStateRejectByClient        CommissionState = "REJECT_BY_CLIENT"
+	CommissionStatePendingValidation              CommissionState = "PENDING_VALIDATION"
+	CommissionStateInValidatedDueToOpenCommission CommissionState = "INVALIDATE_DUE_TO_OPEN_COMMISSION"
+	CommissionStateInValidatedDueToUsers          CommissionState = "INVALIDATE_DUE_TO_USERS"
+	CommissionStatePendingArtistApproval          CommissionState = "PENDING_ARTIST_APPROVAL"
+	CommissionStateRejectByArtist                 CommissionState = "REJECT_BY_ARTIST"
+	CommissionStateRejectByClient                 CommissionState = "REJECT_BY_CLIENT"
+)
+
+type CommissionValidation string
+
+const (
+	CommissionValidationOpenCommission CommissionValidation = "COMM_VALIDATION_OPEN_COMM"
+	CommissionValidationUsers          CommissionValidation = "COMM_VALIDATION_USERS"
 )

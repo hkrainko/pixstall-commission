@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
-	"pixstall-commission/app/commission/delivery/rabbitmq/model"
+	"pixstall-commission/app/commission/delivery/rabbitmq/msg"
 	"pixstall-commission/domain/commission"
-	dModel "pixstall-commission/domain/commission/model"
 	"time"
 )
 
@@ -96,7 +95,7 @@ func (c CommissionMessageBroker) StartUpdateCommissionQueue() {
 
 			switch d.RoutingKey {
 			case "commission.cmd.update":
-				err := c.UpdateCommission(ctx, d.Body)
+				err := c.updateCommission(ctx, d.Body)
 				if err != nil {
 					//TODO: error handling, store it ?
 				}
@@ -125,7 +124,7 @@ func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
 	}
 	err = c.ch.QueueBind(
 		q.Name,
-		"commission.event.validated",
+		"commission.event.validated.#",
 		"commission",
 		false,
 		nil,
@@ -173,8 +172,14 @@ func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
 			}()
 
 			switch d.RoutingKey {
-			case "commission.event.validated":
-				err := c.CommissionValidated(ctx, d.Body)
+			case "commission.event.validated.open-comm":
+				err := c.commOpenCommValidated(ctx, d.Body)
+				if err != nil {
+					//TODO: error handling, store it ?
+				}
+				cancel()
+			case "commission.event.validated.users":
+				err := c.commUsersValidated(ctx, d.Body)
 				if err != nil {
 					//TODO: error handling, store it ?
 				}
@@ -196,8 +201,9 @@ func (c CommissionMessageBroker) StopAllQueues() {
 	log.Printf("StopCommissionQueue success")
 }
 
-func (c CommissionMessageBroker) UpdateCommission(ctx context.Context, body []byte) error {
-	req := model.CommissionUpdater{}
+// Private
+func (c CommissionMessageBroker) updateCommission(ctx context.Context, body []byte) error {
+	req := msg.CommissionUpdater{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
 		return err
@@ -205,21 +211,42 @@ func (c CommissionMessageBroker) UpdateCommission(ctx context.Context, body []by
 	return c.commUseCase.UpdateCommissions(ctx, req.Updater)
 }
 
-func (c CommissionMessageBroker) CommissionValidated(ctx context.Context, body []byte) error {
-	req := model.ValidatedCommission{}
+func (c CommissionMessageBroker) commOpenCommValidated(ctx context.Context, body []byte) error {
+	req := msg.CommissionOpenCommissionValidation{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
 		return err
 	}
-	var state dModel.CommissionState
-	if req.IsValid {
-		state = dModel.CommissionStatePendingArtistApproval
-	} else {
-		state = dModel.CommissionStateInValid
+	return c.commUseCase.OpenCommissionValidation(ctx, req.CommissionOpenCommissionValidation)
+	//var state dModel.CommissionState
+	//if req.IsValid {
+	//	state = dModel.CommissionStatePendingArtistApproval
+	//} else {
+	//	state = dModel.CommissionStateInValid
+	//}
+	//updater := dModel.CommissionUpdater{
+	//	ID:    req.ID,
+	//	State: &state,
+	//}
+	//return c.commUseCase.UpdateCommissions(ctx, updater)
+}
+
+func (c CommissionMessageBroker) commUsersValidated(ctx context.Context, body []byte) error {
+	req := msg.CommissionUsersValidation{}
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		return err
 	}
-	updater := dModel.CommissionUpdater{
-		ID:    req.ID,
-		State: &state,
-	}
-	return c.commUseCase.UpdateCommissions(ctx, updater)
+	return c.commUseCase.UsersValidation(ctx, req.CommissionUsersValidation)
+	//var state dModel.CommissionState
+	//if req.IsValid {
+	//	state = dModel.CommissionStatePendingArtistApproval
+	//} else {
+	//	state = dModel.CommissionStateInValid
+	//}
+	//updater := dModel.CommissionUpdater{
+	//	ID:    req.ID,
+	//	State: &state,
+	//}
+	//return c.commUseCase.UpdateCommissions(ctx, updater)
 }
