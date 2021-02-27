@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
@@ -26,19 +27,9 @@ func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo, msgBro
 
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error) {
 	// Upload
-	if len(creator.RefImages) > 0 {
-		pathImages := make([]model2.PathImage, 0, len(creator.RefImages))
-		for _, refImage := range creator.RefImages {
-			pathImages = append(pathImages, model2.PathImage{
-				Path:  "commissions/",
-				Name:  "RF-" + creator.RequesterID + "-" + uuid.NewString(),
-				Image: refImage,
-			})
-		}
-		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
-		if err == nil {
-			creator.RefImagePaths = paths
-		}
+	storedPaths, err := c.storeRefImage(ctx, creator)
+	if err == nil {
+		creator.RefImagePaths = *storedPaths
 	}
 	newComm, err := c.commRepo.AddCommission(ctx, creator)
 	if err != nil {
@@ -84,4 +75,23 @@ func (c commissionUseCase) SendMessage(ctx context.Context, commID string) error
 
 func (c commissionUseCase) GetMessages(ctx context.Context, commID string, requesterID string) *model.Commission {
 	panic("implement me")
+}
+
+// Private
+func (c commissionUseCase) storeRefImage(ctx context.Context, creator model.CommissionCreator) (*[]string, error) {
+	if len(creator.RefImages) > 0 {
+		pathImages := make([]model2.PathImage, 0, len(creator.RefImages))
+		for _, refImage := range creator.RefImages {
+			pathImages = append(pathImages, model2.PathImage{
+				Path:  "commissions/",
+				Name:  "RF-" + creator.RequesterID + "-" + uuid.NewString(),
+				Image: refImage,
+			})
+		}
+		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
+		if err == nil {
+			return &paths, nil
+		}
+	}
+	return nil, errors.New("storeRefImage failed")
 }
