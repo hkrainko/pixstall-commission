@@ -29,7 +29,7 @@ func NewRabbitMQMsgBrokerRepo(conn *amqp.Connection) msg_broker.Repo {
 }
 
 func (r rabbitmqMsgBrokerRepo) SendCommissionCreatedMessage(ctx context.Context, commission model.Commission) error {
-	cComm := model2.CreatedCommission{Comm: commission}
+	cComm := model2.CreatedCommission{Commission: commission}
 	b, err := json.Marshal(cComm)
 	if err != nil {
 		return err

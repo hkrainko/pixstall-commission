@@ -41,7 +41,7 @@ func (m mongoCommissionRepo) AddCommission(ctx context.Context, creator dModel.C
 
 func (m mongoCommissionRepo) GetCommission(ctx context.Context, commId string) (*dModel.Commission, error) {
 	mongoComm := dao.Commission{}
-	err := m.collection.FindOne(ctx, bson.M{"": ""}).Decode(&mongoComm)
+	err := m.collection.FindOne(ctx, bson.M{"id": commId}).Decode(&mongoComm)
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:

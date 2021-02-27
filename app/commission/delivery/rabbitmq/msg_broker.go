@@ -124,7 +124,7 @@ func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
 	}
 	err = c.ch.QueueBind(
 		q.Name,
-		"commission.event.validated.#",
+		"commission.event.validation.#",
 		"commission",
 		false,
 		nil,
@@ -172,13 +172,13 @@ func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
 			}()
 
 			switch d.RoutingKey {
-			case "commission.event.validated.open-comm":
+			case "commission.event.validation.open-comm":
 				err := c.commOpenCommValidated(ctx, d.Body)
 				if err != nil {
 					//TODO: error handling, store it ?
 				}
 				cancel()
-			case "commission.event.validated.users":
+			case "commission.event.validation.users":
 				err := c.commUsersValidated(ctx, d.Body)
 				if err != nil {
 					//TODO: error handling, store it ?
@@ -218,17 +218,6 @@ func (c CommissionMessageBroker) commOpenCommValidated(ctx context.Context, body
 		return err
 	}
 	return c.commUseCase.OpenCommissionValidation(ctx, req.CommissionOpenCommissionValidation)
-	//var state dModel.CommissionState
-	//if req.IsValid {
-	//	state = dModel.CommissionStatePendingArtistApproval
-	//} else {
-	//	state = dModel.CommissionStateInValid
-	//}
-	//updater := dModel.CommissionUpdater{
-	//	ID:    req.ID,
-	//	State: &state,
-	//}
-	//return c.commUseCase.UpdateCommissions(ctx, updater)
 }
 
 func (c CommissionMessageBroker) commUsersValidated(ctx context.Context, body []byte) error {
@@ -238,15 +227,4 @@ func (c CommissionMessageBroker) commUsersValidated(ctx context.Context, body []
 		return err
 	}
 	return c.commUseCase.UsersValidation(ctx, req.CommissionUsersValidation)
-	//var state dModel.CommissionState
-	//if req.IsValid {
-	//	state = dModel.CommissionStatePendingArtistApproval
-	//} else {
-	//	state = dModel.CommissionStateInValid
-	//}
-	//updater := dModel.CommissionUpdater{
-	//	ID:    req.ID,
-	//	State: &state,
-	//}
-	//return c.commUseCase.UpdateCommissions(ctx, updater)
 }

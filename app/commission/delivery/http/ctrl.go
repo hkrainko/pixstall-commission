@@ -93,7 +93,12 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-
+	if artistID, exist := ctx.GetPostForm("artistId"); exist {
+		creator.ArtistID = artistID
+	} else {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
 	price, err := getPrice(ctx)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
