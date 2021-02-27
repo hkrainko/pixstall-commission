@@ -132,7 +132,7 @@ func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.Comm
 }
 
 func (c commissionUseCase) getCommValidationUsersUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionUsersValidation) model.CommissionUpdater {
-	v := model.CommissionValidationOpenCommission
+	v := model.CommissionValidationUsers
 	if isCommValid := c.isCommValidationCompletable(
 		history, v,
 	); isCommValid {

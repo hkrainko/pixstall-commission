@@ -65,6 +65,7 @@ func (c Commission) ToDomainCommission() model.Commission {
 		CreateTime:           c.CreateTime,
 		CompleteTime:         c.CompleteTime,
 		LastUpdateTime:       c.LastUpdateTime,
+		ValidationHistory:    c.ValidationHistory,
 		State:                c.State,
 	}
 }
