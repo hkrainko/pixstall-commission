@@ -58,10 +58,12 @@ func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.C
 	daoFilter := dao.NewFilterFromDomainCommissionFilter(filter)
 	opts := options.FindOptions{}
 	if filter.Offset != nil {
-		opts.Skip = filter.Offset
+		v := int64(*filter.Offset)
+		opts.Skip = &v
 	}
 	if filter.Count != nil {
-		opts.Limit = filter.Count
+		v := int64(*filter.Count)
+		opts.Limit = &v
 	}
 
 	cursor, err := m.collection.Find(ctx, daoFilter, &opts)
