@@ -57,21 +57,16 @@ func (m mongoCommissionRepo) GetCommission(ctx context.Context, commId string) (
 func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.CommissionFilter, sorter dModel.CommissionSorter) (*[]dModel.Commission, error) {
 	daoFilter := dao.NewFilterFromDomainCommissionFilter(filter)
 	opts := options.FindOptions{}
-	if filter.Offset != nil {
-		v := int64(*filter.Offset)
-		opts.Skip = &v
-	}
-	if filter.Count != nil {
-		v := int64(*filter.Count)
-		opts.Limit = &v
-	}
+	os := int64(filter.Offset)
+	opts.Skip = &os
+	c := int64(filter.Count)
+	opts.Limit = &c
 
 	cursor, err := m.collection.Find(ctx, daoFilter, &opts)
 	if err != nil {
 		return nil, dModel.CommissionErrorUnknown
 	}
 	defer cursor.Close(ctx)
-
 	var dComm []dModel.Commission
 	for cursor.Next(ctx) {
 		var r dao.Commission

@@ -42,8 +42,7 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 	return newComm, nil
 }
 
-func (c commissionUseCase) GetCommissions(ctx context.Context, requesterID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error) {
-	filter.RequesterID = &requesterID
+func (c commissionUseCase) GetCommissions(ctx context.Context, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error) {
 	return c.commRepo.GetCommissions(ctx, filter, sorter)
 }
 

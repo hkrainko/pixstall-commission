@@ -5,8 +5,8 @@ import "time"
 type CommissionFilter struct {
 	ArtistID       *string
 	RequesterID    *string
-	Count          *int
-	Offset         *int
+	Count          int
+	Offset         int
 	PriceFrom      *Price
 	PriceTo        *Price
 	DayNeedFrom    *int

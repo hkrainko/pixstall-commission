@@ -36,17 +36,19 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
+	filter.RequesterID = &tokenUserID
+
 	sorter, err := getSorter(ctx)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-	commissions, err := c.commUseCase.GetCommissions(ctx, tokenUserID, *filter, *sorter)
+	commissions, err := c.commUseCase.GetCommissions(ctx, *filter, *sorter)
 	if err != nil {
 		ctx.JSON(get_commissions.NewErrorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *commissions))
+	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *commissions, filter.Offset, filter.Count))
 }
 
 func (c CommissionController) GetCommissionDetails(ctx *gin.Context) {
@@ -90,7 +92,7 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-	price, err := getPrice(ctx, "price")
+	price, err := getPriceFromPostForm(ctx, "price")
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
@@ -172,7 +174,7 @@ func (c CommissionController) UpdateCommission(ctx *gin.Context) {
 }
 
 // Private methods
-func getPrice(ctx *gin.Context, priceStr string) (*model.Price, error) {
+func getPriceFromPostForm(ctx *gin.Context, priceStr string) (*model.Price, error) {
 	priceAmount, exist := ctx.GetPostForm(priceStr + ".amount")
 	if !exist {
 		return nil, errors.New("")
@@ -182,6 +184,25 @@ func getPrice(ctx *gin.Context, priceStr string) (*model.Price, error) {
 		return nil, err
 	}
 	priceCurrency, exist := ctx.GetPostForm(priceStr + ".currency")
+	if !exist {
+		return nil, errors.New("")
+	}
+	return &model.Price{
+		Amount:   amount,
+		Currency: model.Currency(priceCurrency),
+	}, nil
+}
+
+func getPriceFromQuery(ctx *gin.Context, priceStr string) (*model.Price, error) {
+	priceAmount, exist := ctx.GetQuery(priceStr + ".amount")
+	if !exist {
+		return nil, errors.New("")
+	}
+	amount, err := strconv.ParseFloat(priceAmount, 64)
+	if err != nil {
+		return nil, err
+	}
+	priceCurrency, exist := ctx.GetQuery(priceStr + ".currency")
 	if !exist {
 		return nil, errors.New("")
 	}
@@ -280,52 +301,54 @@ func getFilter(ctx *gin.Context) (*model.CommissionFilter, error) {
 	filter := model.CommissionFilter{
 		ArtistID:       nil,
 		RequesterID:    nil,
-		Count:          nil,
-		Offset:         nil,
 		PriceFrom:      nil,
 		PriceTo:        nil,
 		CreateTimeFrom: nil,
 		CreateTimeTo:   nil,
 		State:          nil,
 	}
-	if artistId, exist := ctx.GetPostForm("artistId"); exist {
+	if artistId, exist := ctx.GetQuery("artistId"); exist {
 		filter.ArtistID = &artistId
 	}
-	if requesterId, exist := ctx.GetPostForm("requesterId"); exist {
+	if requesterId, exist := ctx.GetQuery("requesterId"); exist {
 		filter.RequesterID = &requesterId
 	}
-	if count, exist := ctx.GetPostForm("count"); exist {
+	if count, exist := ctx.GetQuery("count"); exist {
 		if countInt, err := strconv.Atoi(count); err == nil {
-			filter.Count = &countInt
+			filter.Count = countInt
 		} else {
 			return nil, errors.New("bad request")
 		}
+	} else {
+		return nil, errors.New("bad request")
 	}
-	if offset, exist := ctx.GetPostForm("offset"); exist {
+	if offset, exist := ctx.GetQuery("offset"); exist {
 		if countInt, err := strconv.Atoi(offset); err == nil {
-			filter.Count = &countInt
+			filter.Offset = countInt
 		} else {
 			return nil, errors.New("bad request")
 		}
+	} else {
+		return nil, errors.New("bad request")
 	}
-	if priceFrom, err := getPrice(ctx, "priceFrom"); err == nil {
+	if priceFrom, err := getPriceFromQuery(ctx, "priceFrom"); err == nil {
 		filter.PriceFrom = priceFrom
 	}
-	if priceTo, err := getPrice(ctx, "priceTo"); err == nil {
+	if priceTo, err := getPriceFromQuery(ctx, "priceTo"); err == nil {
 		filter.PriceFrom = priceTo
 	}
 	layout := "2014-09-12T11:45:26.371Z"
-	if createTimeFrom, exist := ctx.GetPostForm("createTimeFrom"); exist {
+	if createTimeFrom, exist := ctx.GetQuery("createTimeFrom"); exist {
 		if t, err := time.Parse(layout , createTimeFrom); err == nil {
 			filter.CreateTimeFrom = &t
 		}
 	}
-	if createTimeTo, exist := ctx.GetPostForm("createTimeTo"); exist {
+	if createTimeTo, exist := ctx.GetQuery("createTimeTo"); exist {
 		if t, err := time.Parse(layout , createTimeTo); err == nil {
 			filter.CreateTimeTo = &t
 		}
 	}
-	if state, exist := ctx.GetPostForm("state"); exist {
+	if state, exist := ctx.GetQuery("state"); exist {
 		commState := model.CommissionState(state)
 		filter.State = &commState
 	}
