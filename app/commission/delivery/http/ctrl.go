@@ -36,7 +36,6 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-	filter.RequesterID = &tokenUserID
 
 	sorter, err := getSorter(ctx)
 	if err != nil {
