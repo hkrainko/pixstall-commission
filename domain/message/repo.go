@@ -7,6 +7,6 @@ import (
 )
 
 type Repo interface {
-	AddNewMessage(ctx context.Context, creator model.MessageCreator) (*model.Message, error)
-	GetMessage(ctx context.Context, commId string, lastMsgTime time.Time, count int) (*model.Message, error)
+	AddNewMessage(ctx context.Context, messaging model.Messaging) error
+	GetMessages(ctx context.Context, commId string, lastMsgTime time.Time, count int) (*model.Message, error)
 }

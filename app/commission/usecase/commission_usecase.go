@@ -104,14 +104,20 @@ func (c commissionUseCase) UsersValidation(ctx context.Context, validation model
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
-func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) (*model3.Message, error) {
-	msg, err := c.msgRepo.AddNewMessage(ctx, msgCreator)
+func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) error {
+
+	comm, err := c.commRepo.GetCommission(ctx, msgCreator.CommissionID)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	_ = c.msgBrokerRepo.SendCommissionMessageReceivedMessage(ctx, *msg)
-	// ignore error
-	return msg, nil
+	messaging := newMessagingFromMessageCreator(msgCreator, comm.ArtistID, comm.RequesterID)
+
+	err = c.msgRepo.AddNewMessage(ctx, messaging)
+	if err != nil {
+		return err
+	}
+	_ = c.msgBrokerRepo.SendCommissionMessageReceivedMessage(ctx, messaging)
+	return nil
 }
 
 func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, message model3.Messaging) error {

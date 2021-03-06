@@ -51,9 +51,9 @@ func (r rabbitmqMsgBrokerRepo) SendCommissionCreatedMessage(ctx context.Context,
 	return nil
 }
 
-func (r rabbitmqMsgBrokerRepo) SendCommissionMessageReceivedMessage(ctx context.Context, message dMsgModel.Message) error {
+func (r rabbitmqMsgBrokerRepo) SendCommissionMessageReceivedMessage(ctx context.Context, messaging dMsgModel.Messaging) error {
 	cCommMsg := model2.CommissionMessage{
-		Message: message,
+		Messaging: messaging,
 	}
 	b, err := json.Marshal(cCommMsg)
 	if err != nil {

@@ -71,7 +71,7 @@ func (h *Hub) Run() {
 				}
 				fmt.Printf("%v", wsCreator)
 				ctx := context.Background()
-				_, err = h.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
+				err = h.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
 				if err != nil {
 					// TODO: reply error to client
 				}

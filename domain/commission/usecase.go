@@ -13,6 +13,6 @@ type UseCase interface {
 	UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error
 	OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error
 	UsersValidation(ctx context.Context, validation model.CommissionUsersValidation) error
-	HandleInboundCommissionMessage(ctx context.Context, msgCreator dMsgModel.MessageCreator) (*dMsgModel.Message, error)
+	HandleInboundCommissionMessage(ctx context.Context, msgCreator dMsgModel.MessageCreator) error
 	HandleOutBoundCommissionMessage(ctx context.Context, message dMsgModel.Messaging) error
 }

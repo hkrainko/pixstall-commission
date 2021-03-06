@@ -8,5 +8,5 @@ import (
 
 type Repo interface {
 	SendCommissionCreatedMessage(ctx context.Context, commission model.Commission) error
-	SendCommissionMessageReceivedMessage(ctx context.Context, message model2.Message) error
+	SendCommissionMessageReceivedMessage(ctx context.Context, messaging model2.Messaging) error
 }

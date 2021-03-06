@@ -14,14 +14,14 @@ type Messaging interface {
 }
 
 type Message struct {
-	ID               string       `json:"id" bson:"id"`
-	ArtistID         string       `json:"artistId" bson:"artistId"`
-	RequesterID      string       `json:"requesterId" bson:"requesterId"`
-	OpenCommissionID string       `json:"openCommissionId" bson:"openCommissionId"`
-	CreateTime       time.Time    `json:"createTime" bson:"createTime"`
-	LastUpdatedTime  time.Time    `json:"completeTime" bson:"completeTime"`
-	State            MessageState `json:"state" bson:"state"`
-	MessageType      MessageType  `json:"messageType" bson:"messageType"`
+	ID              string       `json:"id" bson:"id"`
+	ArtistID        string       `json:"artistId" bson:"artistId"`
+	RequesterID     string       `json:"requesterId" bson:"requesterId"`
+	CommissionID    string       `json:"commissionId" bson:"commissionId"`
+	CreateTime      time.Time    `json:"createTime" bson:"createTime"`
+	LastUpdatedTime time.Time    `json:"completeTime" bson:"completeTime"`
+	State           MessageState `json:"state" bson:"state"`
+	MessageType     MessageType  `json:"messageType" bson:"messageType"`
 }
 
 func (m Message) GetID() string {
@@ -37,7 +37,7 @@ func (m Message) GetRequesterID() string {
 }
 
 func (m Message) GetOpenCommissionID() string {
-	return m.OpenCommissionID
+	return m.CommissionID
 }
 
 func (m Message) GetCreateTime() time.Time {
@@ -59,7 +59,8 @@ func (m Message) GetMessageType() MessageType {
 type MessageState string
 
 const (
-	MessageStateNormal MessageState = "N"
+	MessageStateSending MessageState = "SENDING"
+	MessageStateSent    MessageState = "SENT"
 )
 
 type MessageType string
