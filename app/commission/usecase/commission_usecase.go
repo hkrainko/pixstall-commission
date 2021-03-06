@@ -8,6 +8,8 @@ import (
 	"pixstall-commission/domain/commission/model"
 	"pixstall-commission/domain/image"
 	model2 "pixstall-commission/domain/image/model"
+	"pixstall-commission/domain/message"
+	model3 "pixstall-commission/domain/message/model"
 	msgBroker "pixstall-commission/domain/msg-broker"
 )
 
@@ -15,13 +17,15 @@ type commissionUseCase struct {
 	commRepo      commission.Repo
 	imageRepo     image.Repo
 	msgBrokerRepo msgBroker.Repo
+	msgRepo       message.Repo
 }
 
-func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo, msgBrokerRepo msgBroker.Repo) commission.UseCase {
+func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo, msgBrokerRepo msgBroker.Repo, msgRepo message.Repo) commission.UseCase {
 	return &commissionUseCase{
 		commRepo:      commRepo,
 		imageRepo:     imageRepo,
 		msgBrokerRepo: msgBrokerRepo,
+		msgRepo:       msgRepo,
 	}
 }
 
@@ -91,11 +95,17 @@ func (c commissionUseCase) UsersValidation(ctx context.Context, validation model
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
-func (c commissionUseCase) SendMessage(ctx context.Context, commID string) error {
-	panic("implement me")
+func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) (*model3.Message, error) {
+	msg, err := c.msgRepo.AddNewMessage(ctx, msgCreator)
+	if err != nil {
+		return nil, err
+	}
+	_ = c.msgBrokerRepo.SendCommissionMessageReceivedMessage(ctx, *msg)
+	// ignore error
+	return msg, nil
 }
 
-func (c commissionUseCase) GetMessages(ctx context.Context, commID string, requesterID string) *model.Commission {
+func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, message model3.Messaging) error {
 	panic("implement me")
 }
 

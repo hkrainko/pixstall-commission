@@ -7,6 +7,7 @@ import (
 	"log"
 	model2 "pixstall-commission/app/msg-broker/repo/rabbitmq/msg"
 	"pixstall-commission/domain/commission/model"
+	dMsgModel "pixstall-commission/domain/message/model"
 	msg_broker "pixstall-commission/domain/msg-broker"
 )
 
@@ -37,6 +38,30 @@ func (r rabbitmqMsgBrokerRepo) SendCommissionCreatedMessage(ctx context.Context,
 	err = r.ch.Publish(
 		"commission",
 		"commission.event.created",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        b,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r rabbitmqMsgBrokerRepo) SendCommissionMessageReceivedMessage(ctx context.Context, message dMsgModel.Message) error {
+	cCommMsg := model2.CommissionMessage{
+		Message: message,
+	}
+	b, err := json.Marshal(cCommMsg)
+	if err != nil {
+		return err
+	}
+	err = r.ch.Publish(
+		"comm-msg",
+		"comm-msg.event.received",
 		false,
 		false,
 		amqp.Publishing{

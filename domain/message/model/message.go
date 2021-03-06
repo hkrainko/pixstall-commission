@@ -2,6 +2,15 @@ package model
 
 import "time"
 
+type Messaging interface {
+	GetID() string
+	GetOpenCommissionID() string
+	GetCreateTime() time.Time
+	GetLastUpdatedTime() time.Time
+	GetState() MessageState
+	GetMessageType() MessageType
+}
+
 type Message struct {
 	ID               string       `json:"id" bson:"id"`
 	OpenCommissionID string       `json:"openCommissionId" bson:"openCommissionId"`
@@ -11,24 +20,28 @@ type Message struct {
 	MessageType      MessageType  `json:"messageType" bson:"messageType"`
 }
 
-type TextMessage struct {
-	Message
-	From string `json:"from" bson:"from"`
-	To   string `json:"to" bson:"to"`
-	Text string `json:"text" bson:"text"`
+func (m Message) GetID() string {
+	return m.ID
 }
 
-type ImageMessage struct {
-	Message
-	From      string  `json:"from" bson:"from"`
-	To        string  `json:"to" bson:"to"`
-	Text      *string `json:"text" bson:"text"`
-	ImagePath string  `json:"imagePath" bson:"imagePath"`
+func (m Message) GetOpenCommissionID() string {
+	return m.OpenCommissionID
 }
 
-type SystemMessage struct {
-	Message
-	Text *string `json:"text" bson:"text"`
+func (m Message) GetCreateTime() time.Time {
+	return m.CreateTime
+}
+
+func (m Message) GetLastUpdatedTime() time.Time {
+	return m.LastUpdatedTime
+}
+
+func (m Message) GetState() MessageState {
+	return m.State
+}
+
+func (m Message) GetMessageType() MessageType {
+	return m.MessageType
 }
 
 type MessageState string

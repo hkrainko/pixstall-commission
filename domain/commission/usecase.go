@@ -3,6 +3,7 @@ package commission
 import (
 	"context"
 	"pixstall-commission/domain/commission/model"
+	dMsgModel "pixstall-commission/domain/message/model"
 )
 
 type UseCase interface {
@@ -12,6 +13,6 @@ type UseCase interface {
 	UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error
 	OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error
 	UsersValidation(ctx context.Context, validation model.CommissionUsersValidation) error
-	SendMessage(ctx context.Context, commID string) error
-	GetMessages(ctx context.Context, commID string, requesterID string) *model.Commission
+	HandleInboundCommissionMessage(ctx context.Context, msgCreator dMsgModel.MessageCreator) (*dMsgModel.Message, error)
+	HandleOutBoundCommissionMessage(ctx context.Context, message dMsgModel.Messaging) error
 }

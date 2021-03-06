@@ -52,12 +52,12 @@ func main() {
 	db := dbClient.Database("pixstall-commission")
 
 	//RabbitMQ
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	rbMQConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ %v", err)
 	}
-	defer conn.Close()
-	ch, err := conn.Channel()
+	defer rbMQConn.Close()
+	ch, err := rbMQConn.Channel()
 	if err != nil {
 		log.Fatalf("Failed to create channel %v", err)
 	}
@@ -73,14 +73,27 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create exchange %v", err)
 	}
+	err = ch.ExchangeDeclare(
+		"comm-msg",
+		"fanout",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatalf("Failed to create exchange %v", err)
+	}
 
-	commMsgBroker := InitCommissionMessageBroker(db, conn, awsS3)
+	commMsgBroker := InitCommissionMessageBroker(db, rbMQConn, awsS3)
 	go commMsgBroker.StartUpdateCommissionQueue()
 	go commMsgBroker.StartCommissionValidatedQueue()
+	go commMsgBroker.StartCommissionMessageDeliverQueue()
 	defer commMsgBroker.StopAllQueues()
 
 	// WebSocket
-	hub := ws.NewHub()
+	hub := ws.NewHub(nil)
 	go hub.Run()
 
 	// Gin
@@ -103,7 +116,7 @@ func main() {
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctrl := InitCommissionController(db, awsS3, conn)
+		ctrl := InitCommissionController(db, awsS3, rbMQConn)
 		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
 		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)

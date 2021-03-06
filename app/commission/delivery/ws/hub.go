@@ -4,6 +4,15 @@
 
 package ws
 
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"pixstall-commission/app/commission/delivery/ws/msg"
+	"pixstall-commission/domain/commission"
+	"pixstall-commission/domain/message/model"
+)
+
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -18,14 +27,17 @@ type Hub struct {
 
 	// Unregister requests from clients.
 	unregister chan *Client
+
+	commUseCase commission.UseCase
 }
 
-func NewHub() *Hub {
+func NewHub(commUseCase commission.UseCase) *Hub {
 	return &Hub{
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
+		commUseCase: commUseCase,
 	}
 }
 
@@ -40,9 +52,38 @@ func (h *Hub) Run() {
 				close(client.send)
 			}
 		case message := <-h.broadcast:
+			// TODO: write to usecase
+
+			var dat map[string]interface{}
+			err := json.Unmarshal(message, &dat)
+			if err != nil {
+				fmt.Printf("err: %v\n", err.Error())
+				continue
+			}
+			msgType := dat["type"]
+			switch msgType {
+			case "chat":
+				var wsCreator = msg.WSMessageCreator{}
+				err := json.Unmarshal(message, &wsCreator)
+				if err != nil {
+					fmt.Printf("err2: %v\n", err.Error())
+					continue
+				}
+				fmt.Printf("%v", wsCreator)
+				ctx := context.Background()
+				_, err = h.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
+				if err != nil {
+					// TODO: reply error to client
+				}
+			case "cmd":
+				fmt.Printf("cmd")
+			default:
+				continue
+			}
+			b := []byte("reply" + string(message))
 			for client := range h.clients {
 				select {
-				case client.send <- message:
+				case client.send <- b:
 				default:
 					close(client.send)
 					delete(h.clients, client)
@@ -50,4 +91,20 @@ func (h *Hub) Run() {
 			}
 		}
 	}
+}
+
+func (h *Hub) DeliverCommissionMessage(ctx context.Context, messaging model.Messaging) error {
+	j, err := json.Marshal(messaging)
+	if err != nil {
+		return err
+	}
+	for client := range h.clients {
+		select {
+		case client.send <- j:
+		default:
+			close(client.send)
+			delete(h.clients, client)
+		}
+	}
+	return nil
 }
