@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
 	"pixstall-commission/domain/image"
@@ -18,14 +19,22 @@ type commissionUseCase struct {
 	imageRepo     image.Repo
 	msgBrokerRepo msgBroker.Repo
 	msgRepo       message.Repo
+	commMsgDeliRepo commMsgDelivery.Repo
 }
 
-func NewCommissionUseCase(commRepo commission.Repo, imageRepo image.Repo, msgBrokerRepo msgBroker.Repo, msgRepo message.Repo) commission.UseCase {
+func NewCommissionUseCase(
+	commRepo commission.Repo,
+	imageRepo image.Repo,
+	msgBrokerRepo msgBroker.Repo,
+	msgRepo message.Repo,
+	commMsgDeliRepo commMsgDelivery.Repo,
+	) commission.UseCase {
 	return &commissionUseCase{
 		commRepo:      commRepo,
 		imageRepo:     imageRepo,
 		msgBrokerRepo: msgBrokerRepo,
 		msgRepo:       msgRepo,
+		commMsgDeliRepo: commMsgDeliRepo,
 	}
 }
 
@@ -106,7 +115,7 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 }
 
 func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, message model3.Messaging) error {
-	panic("implement me")
+	return c.commMsgDeliRepo.DeliverCommissionMessage(ctx, message)
 }
 
 // Private

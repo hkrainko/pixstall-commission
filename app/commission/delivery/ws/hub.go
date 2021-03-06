@@ -99,11 +99,9 @@ func (h *Hub) DeliverCommissionMessage(ctx context.Context, messaging model.Mess
 		return err
 	}
 	for client := range h.clients {
-		select {
-		case client.send <- j:
-		default:
-			close(client.send)
-			delete(h.clients, client)
+		if messaging.GetArtistID() == client.userId || messaging.GetRequesterID() == client.userId {
+			fmt.Printf("deliver comm msg to %v, msg:%v", client.userId, messaging)
+			client.send <- j
 		}
 	}
 	return nil

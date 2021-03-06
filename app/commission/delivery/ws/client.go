@@ -51,6 +51,8 @@ type Client struct {
 
 	// Buffered channel of outbound messages.
 	send chan []byte
+
+	userId string
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -127,6 +129,10 @@ func (c *Client) writePump() {
 
 // serveWs handles websocket requests from the peer.
 func ServeWS(hub *Hub, c *gin.Context) {
+	tokenUserID := c.GetString("userId")
+	if tokenUserID == "" {
+		return
+	}
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -136,6 +142,7 @@ func ServeWS(hub *Hub, c *gin.Context) {
 		hub: hub,
 		conn: conn,
 		send: make(chan []byte, 256),
+		userId: tokenUserID,
 	}
 	client.hub.register <- client
 

@@ -51,6 +51,10 @@ func main() {
 	}()
 	db := dbClient.Database("pixstall-commission")
 
+	// WebSocket
+	hub := ws.NewHub(nil)
+	go hub.Run()
+
 	//RabbitMQ
 	rbMQConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
@@ -86,15 +90,11 @@ func main() {
 		log.Fatalf("Failed to create exchange %v", err)
 	}
 
-	commMsgBroker := InitCommissionMessageBroker(db, rbMQConn, awsS3)
+	commMsgBroker := InitCommissionMessageBroker(db, rbMQConn, awsS3, hub)
 	go commMsgBroker.StartUpdateCommissionQueue()
 	go commMsgBroker.StartCommissionValidatedQueue()
 	go commMsgBroker.StartCommissionMessageDeliverQueue()
 	defer commMsgBroker.StopAllQueues()
-
-	// WebSocket
-	hub := ws.NewHub(nil)
-	go hub.Run()
 
 	// Gin
 	r := gin.Default()
@@ -116,7 +116,7 @@ func main() {
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctrl := InitCommissionController(db, awsS3, rbMQConn)
+		ctrl := InitCommissionController(db, awsS3, rbMQConn, hub)
 		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
 		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)
