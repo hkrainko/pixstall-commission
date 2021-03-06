@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
+	"pixstall-commission/app/commission/delivery/ws"
 	"pixstall-commission/app/middleware"
 	"time"
 )
@@ -78,7 +79,11 @@ func main() {
 	go commMsgBroker.StartCommissionValidatedQueue()
 	defer commMsgBroker.StopAllQueues()
 
-	//Gin
+	// WebSocket
+	hub := ws.NewHub()
+	go hub.Run()
+
+	// Gin
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
@@ -93,8 +98,9 @@ func main() {
 
 	userIDExtractor := middleware.NewJWTPayloadsExtractor([]string{"userId"})
 
-	apiGroup := r.Group("/api")
+	r.GET("/ws", func(c *gin.Context) {ws.ServeWS(hub, c)})
 
+	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
 		ctrl := InitCommissionController(db, awsS3, conn)
