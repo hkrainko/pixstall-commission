@@ -52,7 +52,7 @@ func main() {
 	db := dbClient.Database("pixstall-commission")
 
 	// WebSocket
-	hub := ws.NewHub(nil)
+	hub := ws.NewHub(ctx, nil)
 	go hub.Run()
 
 	//RabbitMQ
@@ -104,14 +104,15 @@ func main() {
 		AllowHeaders:     []string{"Origin", "Content-Type", "Access-Control-Allow-Origin", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
-		AllowWildcard: true,
-		AllowFiles: true,
-		MaxAge: 12 * time.Hour,
+		AllowWildcard:    true,
+		AllowFiles:       true,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	userIDExtractor := middleware.NewJWTPayloadsExtractor([]string{"userId"})
 
-	r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
+	//r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
+	r.GET("/ws", func(c *gin.Context) { ws.ServeWS(hub, c) })
 
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")

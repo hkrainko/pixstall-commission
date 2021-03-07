@@ -16,6 +16,7 @@ import (
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
+	ctx context.Context
 	// Registered clients.
 	clients map[*Client]bool
 
@@ -31,8 +32,9 @@ type Hub struct {
 	commUseCase commission.UseCase
 }
 
-func NewHub(commUseCase commission.UseCase) *Hub {
+func NewHub(ctx context.Context, commUseCase commission.UseCase) *Hub {
 	return &Hub{
+		ctx: ctx,
 		broadcast:  make(chan UserMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
@@ -53,14 +55,15 @@ func (h *Hub) Run() {
 			}
 		case message := <-h.broadcast:
 			// TODO: write to usecase
+			fmt.Printf("in msg userId:%v msg:%v\n", message.UserID, string(message.Byte))
 
-			var dat map[string]interface{}
+			var dat = msg.WSMessage{}
 			err := json.Unmarshal(message.Byte, &dat)
 			if err != nil {
 				fmt.Printf("err: %v\n", err.Error())
 				continue
 			}
-			msgType := dat["type"]
+			msgType := dat.Type
 			switch msgType {
 			case "chat":
 				var wsCreator = msg.WSMessageCreator{}
@@ -71,8 +74,7 @@ func (h *Hub) Run() {
 				}
 				wsCreator.Form = &message.UserID // memory leak?
 				fmt.Printf("%v", wsCreator)
-				ctx := context.Background()
-				err = h.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
+				err = h.commUseCase.HandleInboundCommissionMessage(h.ctx, wsCreator.MessageCreator)
 				if err != nil {
 					// TODO: reply error to client
 				}

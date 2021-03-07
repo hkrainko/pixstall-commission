@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -76,7 +77,11 @@ func (c *Client) readPump() {
 			}
 			break
 		}
-		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		message, err = getPrettyJsonMessage(message)
+		if err != nil {
+			log.Printf("error: %v", err)
+			break
+		}
 		c.hub.broadcast <- UserMessage{
 			UserID: c.userId,
 			Byte:   message,
@@ -132,10 +137,11 @@ func (c *Client) writePump() {
 
 // serveWs handles websocket requests from the peer.
 func ServeWS(hub *Hub, c *gin.Context) {
-	tokenUserID := c.GetString("userId")
-	if tokenUserID == "" {
-		return
-	}
+	//tokenUserID := c.GetString("userId")
+	//if tokenUserID == "" {
+	//	return
+	//}
+	tokenUserID := "artist_02"
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println(err)
@@ -153,4 +159,14 @@ func ServeWS(hub *Hub, c *gin.Context) {
 	// new goroutines.
 	go client.writePump()
 	go client.readPump()
+}
+
+// Private
+func getPrettyJsonMessage(b []byte) ([]byte, error) {
+	st, err := strconv.Unquote(string(b))
+	if err != nil {
+		log.Printf("error: %v", err)
+		return nil, err
+	}
+	return bytes.TrimSpace(bytes.Replace([]byte(st), newline, space, -1)), nil
 }
