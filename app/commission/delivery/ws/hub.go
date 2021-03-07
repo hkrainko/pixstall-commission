@@ -20,7 +20,7 @@ type Hub struct {
 	clients map[*Client]bool
 
 	// Inbound messages from the clients.
-	broadcast chan []byte
+	broadcast chan UserMessage
 
 	// Register requests from the clients.
 	register chan *Client
@@ -33,7 +33,7 @@ type Hub struct {
 
 func NewHub(commUseCase commission.UseCase) *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte),
+		broadcast:  make(chan UserMessage),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
@@ -55,7 +55,7 @@ func (h *Hub) Run() {
 			// TODO: write to usecase
 
 			var dat map[string]interface{}
-			err := json.Unmarshal(message, &dat)
+			err := json.Unmarshal(message.Byte, &dat)
 			if err != nil {
 				fmt.Printf("err: %v\n", err.Error())
 				continue
@@ -64,11 +64,12 @@ func (h *Hub) Run() {
 			switch msgType {
 			case "chat":
 				var wsCreator = msg.WSMessageCreator{}
-				err := json.Unmarshal(message, &wsCreator)
+				err := json.Unmarshal(message.Byte, &wsCreator)
 				if err != nil {
 					fmt.Printf("err2: %v\n", err.Error())
 					continue
 				}
+				wsCreator.Form = &message.UserID // memory leak?
 				fmt.Printf("%v", wsCreator)
 				ctx := context.Background()
 				err = h.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
@@ -80,7 +81,7 @@ func (h *Hub) Run() {
 			default:
 				continue
 			}
-			b := []byte("reply" + string(message))
+			b := []byte("reply" + string(message.Byte))
 			for client := range h.clients {
 				select {
 				case client.send <- b:

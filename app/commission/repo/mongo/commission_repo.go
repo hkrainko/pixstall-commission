@@ -9,6 +9,7 @@ import (
 	"pixstall-commission/app/commission/repo/mongo/dao"
 	"pixstall-commission/domain/commission"
 	dModel "pixstall-commission/domain/commission/model"
+	error2 "pixstall-commission/domain/error"
 )
 
 type mongoCommissionRepo struct {
@@ -41,13 +42,19 @@ func (m mongoCommissionRepo) AddCommission(ctx context.Context, creator dModel.C
 
 func (m mongoCommissionRepo) GetCommission(ctx context.Context, commId string) (*dModel.Commission, error) {
 	mongoComm := dao.Commission{}
-	err := m.collection.FindOne(ctx, bson.M{"id": commId}).Decode(&mongoComm)
+	opts := options.FindOneOptions{
+		Projection: bson.M{
+			"messages": bson.M{"$slice": -20},
+		},
+	}
+
+	err := m.collection.FindOne(ctx, bson.M{"id": commId}, &opts).Decode(&mongoComm)
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:
-			return nil, dModel.CommissionErrorNotFound
+			return nil, error2.NotFoundError
 		default:
-			return nil, dModel.CommissionErrorUnknown
+			return nil, error2.UnknownError
 		}
 	}
 	dComm := mongoComm.ToDomainCommission()

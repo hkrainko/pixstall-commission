@@ -2,12 +2,14 @@ package http
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
 	"net/http"
 	add_commission "pixstall-commission/app/commission/delivery/model/add-commission"
+	get_commission "pixstall-commission/app/commission/delivery/model/get-commission"
 	get_commissions "pixstall-commission/app/commission/delivery/model/get-commissions"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
@@ -50,17 +52,34 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *commissions, filter.Offset, filter.Count))
 }
 
+func (c CommissionController) GetCommission(ctx *gin.Context) {
+	tokenUserID := ctx.GetString("userId")
+	if tokenUserID == "" {
+		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		return
+	}
+	commId := ctx.Param("id")
+	comm, err := c.commUseCase.GetCommission(ctx, commId)
+	if err != nil {
+		ctx.JSON(get_commission.NewErrorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, get_commission.NewResponse(*comm))
+}
+
 func (c CommissionController) GetCommissionDetails(ctx *gin.Context) {
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
 		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
+	commId := ctx.Param("id")
+	fmt.Print(commId)
 
 	// TODO
 }
 
-func (c CommissionController) GetCommissionMessages(ctx *gin.Context) {
+func (c CommissionController) GetMessages(ctx *gin.Context) {
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
 		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))

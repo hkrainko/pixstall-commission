@@ -14,5 +14,6 @@ func (e DomainError) Error() string {
 }
 
 const (
-	UnknownError DomainError = 10
+	NotFoundError DomainError = 10
+	UnknownError DomainError = 99
 )

@@ -77,7 +77,10 @@ func (c *Client) readPump() {
 			break
 		}
 		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
-		c.hub.broadcast <- message
+		c.hub.broadcast <- UserMessage{
+			UserID: c.userId,
+			Byte:   message,
+		}
 	}
 }
 
@@ -139,9 +142,9 @@ func ServeWS(hub *Hub, c *gin.Context) {
 		return
 	}
 	client := &Client{
-		hub: hub,
-		conn: conn,
-		send: make(chan []byte, 256),
+		hub:    hub,
+		conn:   conn,
+		send:   make(chan []byte, 256),
 		userId: tokenUserID,
 	}
 	client.hub.register <- client

@@ -59,6 +59,10 @@ func (c commissionUseCase) GetCommissions(ctx context.Context, filter model.Comm
 	return c.commRepo.GetCommissions(ctx, filter, sorter)
 }
 
+func (c commissionUseCase) GetCommission(ctx context.Context, commId string) (*model.Commission, error) {
+	return c.commRepo.GetCommission(ctx, commId)
+}
+
 func (c commissionUseCase) GetWorks(ctx context.Context, artistID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error) {
 	filter.ArtistID = &artistID
 	return c.commRepo.GetCommissions(ctx, filter, sorter)

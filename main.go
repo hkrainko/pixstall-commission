@@ -111,15 +111,16 @@ func main() {
 
 	userIDExtractor := middleware.NewJWTPayloadsExtractor([]string{"userId"})
 
-	r.GET("/ws", func(c *gin.Context) {ws.ServeWS(hub, c)})
+	r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
 
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
 		ctrl := InitCommissionController(db, awsS3, rbMQConn, hub)
 		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
+		commissionGroup.GET("/:id", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommission)
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
-		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionMessages)
+		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetMessages)
 		commissionGroup.POST("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.AddCommission)
 		commissionGroup.PATCH("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.UpdateCommission)
 	}
