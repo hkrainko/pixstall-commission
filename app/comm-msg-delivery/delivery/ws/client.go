@@ -6,7 +6,6 @@ package ws
 
 import (
 	"bytes"
-	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,7 +44,8 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub *Hub
+	broadcast chan UserMessage
+	unregister chan *Client
 
 	// The websocket connection.
 	conn *websocket.Conn
@@ -63,7 +63,7 @@ type Client struct {
 // reads from this goroutine.
 func (c *Client) readPump() {
 	defer func() {
-		c.hub.unregister <- c
+		c.unregister <- c
 		c.conn.Close()
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
@@ -82,7 +82,7 @@ func (c *Client) readPump() {
 			log.Printf("error: %v", err)
 			break
 		}
-		c.hub.broadcast <- UserMessage{
+		c.broadcast <- UserMessage{
 			UserID: c.userId,
 			Byte:   message,
 		}
@@ -133,32 +133,6 @@ func (c *Client) writePump() {
 			}
 		}
 	}
-}
-
-// serveWs handles websocket requests from the peer.
-func ServeWS(hub *Hub, c *gin.Context) {
-	//tokenUserID := c.GetString("userId")
-	//if tokenUserID == "" {
-	//	return
-	//}
-	tokenUserID := "artist_02"
-	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	client := &Client{
-		hub:    hub,
-		conn:   conn,
-		send:   make(chan []byte, 256),
-		userId: tokenUserID,
-	}
-	client.hub.register <- client
-
-	// Allow collection of memory referenced by the caller by doing all work in
-	// new goroutines.
-	go client.writePump()
-	go client.readPump()
 }
 
 // Private

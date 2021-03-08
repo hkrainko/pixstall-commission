@@ -9,10 +9,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/mongo"
+	"pixstall-commission/app/comm-msg-delivery/delivery/ws"
 	ws2 "pixstall-commission/app/comm-msg-delivery/repo/ws"
 	"pixstall-commission/app/commission/delivery/http"
 	rabbitmq2 "pixstall-commission/app/commission/delivery/rabbitmq"
-	"pixstall-commission/app/commission/delivery/ws"
 	mongo2 "pixstall-commission/app/commission/repo/mongo"
 	"pixstall-commission/app/commission/usecase"
 	"pixstall-commission/app/image/aws-s3"
@@ -21,6 +21,17 @@ import (
 )
 
 // Injectors from wire.go:
+
+func InitCommissionMessageController(db *mongo.Database, awsS3 *s3.S3, conn *amqp.Connection, hub *ws.Hub) ws.CommissionMessageController {
+	repo := mongo2.NewMongoCommissionRepo(db)
+	imageRepo := aws_s3.NewAWSS3ImageRepository(awsS3)
+	msg_brokerRepo := rabbitmq.NewRabbitMQMsgBrokerRepo(conn)
+	messageRepo := mongo3.NewMongoMessageRepo(db)
+	comm_msg_deliveryRepo := ws2.NewWSCommMsgDeliveryRepo(hub)
+	useCase := usecase.NewCommissionUseCase(repo, imageRepo, msg_brokerRepo, messageRepo, comm_msg_deliveryRepo)
+	commissionMessageController := ws.NewCommissionMessageController(useCase, hub)
+	return commissionMessageController
+}
 
 func InitCommissionController(db *mongo.Database, awsS3 *s3.S3, conn *amqp.Connection, hub *ws.Hub) http.CommissionController {
 	repo := mongo2.NewMongoCommissionRepo(db)

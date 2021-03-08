@@ -13,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
-	"pixstall-commission/app/commission/delivery/ws"
+	"pixstall-commission/app/comm-msg-delivery/delivery/ws"
 	"pixstall-commission/app/middleware"
 	"time"
 )
@@ -52,8 +52,7 @@ func main() {
 	db := dbClient.Database("pixstall-commission")
 
 	// WebSocket
-	hub := ws.NewHub(ctx, nil)
-	go hub.Run()
+	hub := ws.NewHub()
 
 	//RabbitMQ
 	rbMQConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
@@ -111,19 +110,23 @@ func main() {
 
 	userIDExtractor := middleware.NewJWTPayloadsExtractor([]string{"userId"})
 
-	//r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
-	r.GET("/ws", func(c *gin.Context) { ws.ServeWS(hub, c) })
+	{
+		ctrl := InitCommissionMessageController(db, awsS3, rbMQConn, hub)
+		go ctrl.Run()
+		//r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
+		r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWTInQuery, ctrl.HandleConnection)
+	}
 
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
 		ctrl := InitCommissionController(db, awsS3, rbMQConn, hub)
-		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissions)
-		commissionGroup.GET("/:id", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommission)
-		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetCommissionDetails)
-		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWT, ctrl.GetMessages)
-		commissionGroup.POST("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.AddCommission)
-		commissionGroup.PATCH("", userIDExtractor.ExtractPayloadsFromJWT, ctrl.UpdateCommission)
+		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommissions)
+		commissionGroup.GET("/:id", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommission)
+		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommissionDetails)
+		commissionGroup.GET("/:id/messages", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetMessages)
+		commissionGroup.POST("", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.AddCommission)
+		commissionGroup.PATCH("", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.UpdateCommission)
 	}
 
 	err = r.Run(":9004")

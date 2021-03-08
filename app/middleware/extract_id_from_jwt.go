@@ -3,7 +3,6 @@ package middleware
 import (
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -19,18 +18,38 @@ func NewJWTPayloadsExtractor(keys []string) *JWTPayloadsExtractor {
 	}
 }
 
-func (j *JWTPayloadsExtractor) ExtractPayloadsFromJWT(c *gin.Context) {
-	fmt.Println("in ExtractIDFromJWT")
+func (j *JWTPayloadsExtractor) ExtractPayloadsFromJWTInHeader(c *gin.Context) {
 	jwtToken := strings.TrimPrefix(c.GetHeader("Authorization"), "Bearer ")
-	print(jwtToken)
-
-	ss := strings.Split(jwtToken, ".")
-
-	if len(ss) != 3 {
+	payload := j.getPayloadPartFromFullToken(jwtToken)
+	if payload == nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	b, err := base64.RawStdEncoding.DecodeString(ss[1])
+	j.passTokenToNext(c, *payload)
+}
+
+func (j *JWTPayloadsExtractor) ExtractPayloadsFromJWTInQuery(c *gin.Context) {
+	jwtToken := c.Query("access_token")
+	payload := j.getPayloadPartFromFullToken(jwtToken)
+	if payload == nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+	j.passTokenToNext(c, *payload)
+}
+
+
+// Private
+func (j *JWTPayloadsExtractor) getPayloadPartFromFullToken(token string) *string {
+	ss := strings.Split(token, ".")
+	if len(ss) != 3 {
+		return nil
+	}
+	return &ss[1]
+}
+
+func (j *JWTPayloadsExtractor) passTokenToNext(c *gin.Context, token string) {
+	b, err := base64.RawStdEncoding.DecodeString(token)
 	if b == nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return

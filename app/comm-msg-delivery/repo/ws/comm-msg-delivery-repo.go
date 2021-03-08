@@ -2,7 +2,7 @@ package ws
 
 import (
 	"context"
-	"pixstall-commission/app/commission/delivery/ws"
+	"pixstall-commission/app/comm-msg-delivery/delivery/ws"
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/message/model"
 )
