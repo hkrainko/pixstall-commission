@@ -6,7 +6,7 @@ type Messaging interface {
 	GetID() string
 	GetArtistID() string
 	GetRequesterID() string
-	GetOpenCommissionID() string
+	GetCommissionID() string
 	GetCreateTime() time.Time
 	GetLastUpdatedTime() time.Time
 	GetState() MessageState
@@ -36,7 +36,7 @@ func (m Message) GetRequesterID() string {
 	return m.RequesterID
 }
 
-func (m Message) GetOpenCommissionID() string {
+func (m Message) GetCommissionID() string {
 	return m.CommissionID
 }
 
