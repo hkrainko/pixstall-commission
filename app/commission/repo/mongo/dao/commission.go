@@ -3,13 +3,16 @@ package dao
 import (
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"pixstall-commission/app/message/repo/mongo/dao"
 	"pixstall-commission/domain/commission/model"
+	model2 "pixstall-commission/domain/message/model"
 	"time"
 )
 
 type Commission struct {
 	ObjectID         primitive.ObjectID `bson:"_id,omitempty"`
 	model.Commission `bson:",inline"`
+	Messages         []dao.Message `bson:"messages"`
 }
 
 func NewFromCommissionCreator(d model.CommissionCreator) Commission {
@@ -17,7 +20,7 @@ func NewFromCommissionCreator(d model.CommissionCreator) Commission {
 	return Commission{
 		ObjectID: primitive.ObjectID{},
 		Commission: model.Commission{
-			ID:                "CM-" + uuid.NewString(),
+			ID:                "cm-" + uuid.NewString(),
 			OpenCommissionID:  d.OpenCommissionID,
 			ArtistID:          d.ArtistID,
 			RequesterID:       d.RequesterID,
@@ -38,10 +41,17 @@ func NewFromCommissionCreator(d model.CommissionCreator) Commission {
 			ValidationHistory: []model.CommissionValidation{},
 			State:             model.CommissionStatePendingValidation,
 		},
+		Messages: []dao.Message{},
 	}
 }
 
 func (c Commission) ToDomainCommission() model.Commission {
+
+	var dMessaging []model2.Messaging
+	for _, value := range c.Messages {
+		dMessaging = append(dMessaging, value.ToDomainMessaging())
+	}
+
 	return model.Commission{
 		ID:                   c.ID,
 		OpenCommissionID:     c.OpenCommissionID,
@@ -62,6 +72,7 @@ func (c Commission) ToDomainCommission() model.Commission {
 		BePrivate:            c.BePrivate,
 		Anonymous:            c.Anonymous,
 		RefImagePaths:        c.RefImagePaths,
+		Messages:             dMessaging,
 		CreateTime:           c.CreateTime,
 		CompleteTime:         c.CompleteTime,
 		LastUpdateTime:       c.LastUpdateTime,

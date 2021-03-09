@@ -30,7 +30,7 @@ func NewMongoMessageRepo(db *mongo.Database) message.Repo {
 func (m mongoMessageRepo) AddNewMessage(ctx context.Context, messaging model.Messaging) error {
 	daoMessage := dao.NewFromMessaging(messaging)
 
-	filter := bson.M{"id": messaging.GetID()}
+	filter := bson.M{"id": messaging.GetCommissionID()}
 	change := bson.M{"$push": bson.M{"messages": daoMessage}}
 
 	_, err := m.collection.UpdateOne(ctx, filter, change)

@@ -29,7 +29,7 @@ func getSystemMessage(d model.MessageCreator, artistID string, requesterID strin
 			State:           model.MessageStateSent,
 			MessageType:     model.MessageTypeSystem,
 		},
-		Text: &d.Text,
+		Text: d.Text,
 	}
 }
 

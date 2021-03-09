@@ -28,7 +28,7 @@ type Commission struct {
 	Anonymous     bool     `json:"anonymous" bson:"anonymous"`
 	RefImagePaths []string `json:"refImagePaths" bson:"refImagePaths"`
 
-	Messages []model.Message `json:"messages" bson:"messages"`
+	Messages []model.Messaging `json:"messages" bson:"-"`
 
 	CreateTime         time.Time              `json:"createTime" bson:"createTime"`
 	CompleteTime       *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
