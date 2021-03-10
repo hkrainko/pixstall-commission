@@ -1,16 +1,12 @@
 package dao
 
 import (
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"pixstall-commission/domain/message/model"
 	"time"
 )
 
 type Message struct {
-	ObjectID        primitive.ObjectID `bson:"_id,omitempty"`
 	ID              string             `bson:"id"`
-	ArtistID        string             `bson:"artistId"`
-	RequesterID     string             `bson:"requesterId"`
 	CommissionID    string             `bson:"commissionId"`
 	CreateTime      time.Time          `bson:"createTime"`
 	LastUpdatedTime time.Time          `bson:"completeTime"`
@@ -25,10 +21,7 @@ type Message struct {
 func NewFromMessaging(d model.Messaging) *Message {
 
 	msg := Message{
-		ObjectID:        primitive.ObjectID{},
 		ID:              d.GetID(),
-		ArtistID:        d.GetArtistID(),
-		RequesterID:     d.GetRequesterID(),
 		CommissionID:    d.GetCommissionID(),
 		CreateTime:      d.GetCreateTime(),
 		LastUpdatedTime: d.GetLastUpdatedTime(),
@@ -51,12 +44,12 @@ func NewFromMessaging(d model.Messaging) *Message {
 	return &msg
 }
 
-func (m *Message) ToDomainMessaging() model.Messaging {
+func (m *Message) ToDomainMessaging(artistID string, requesterID string) model.Messaging {
 
 	msg := model.Message{
 		ID:              m.ID,
-		ArtistID:        m.ArtistID,
-		RequesterID:     m.RequesterID,
+		ArtistID:        artistID,
+		RequesterID:     requesterID,
 		CommissionID:    m.CommissionID,
 		CreateTime:      m.CreateTime,
 		LastUpdatedTime: m.LastUpdatedTime,

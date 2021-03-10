@@ -21,8 +21,8 @@ func getSystemMessage(d model.MessageCreator, artistID string, requesterID strin
 	return model.SystemMessage{
 		Message: model.Message{
 			ID:              "msg-" + uuid.NewString(),
-			ArtistID:        "",
-			RequesterID:     "",
+			ArtistID:        artistID,
+			RequesterID:     requesterID,
 			CommissionID:    d.CommissionID,
 			CreateTime:      time.Now(),
 			LastUpdatedTime: time.Now(),
@@ -37,8 +37,8 @@ func getImageMessage(d model.MessageCreator, artistID string, requesterID string
 	return model.ImageMessage{
 		Message: model.Message{
 			ID:              "msg-" + uuid.NewString(),
-			ArtistID:        "",
-			RequesterID:     "",
+			ArtistID:        artistID,
+			RequesterID:     requesterID,
 			CommissionID:    d.CommissionID,
 			CreateTime:      time.Now(),
 			LastUpdatedTime: time.Now(),
@@ -55,8 +55,8 @@ func getTextMessage(d model.MessageCreator, artistID string, requesterID string)
 	return model.TextMessage{
 		Message: model.Message{
 			ID:              "msg-" + uuid.NewString(),
-			ArtistID:        "",
-			RequesterID:     "",
+			ArtistID:        artistID,
+			RequesterID:     requesterID,
 			CommissionID:    d.CommissionID,
 			CreateTime:      time.Now(),
 			LastUpdatedTime: time.Now(),

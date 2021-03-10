@@ -49,7 +49,7 @@ func (c Commission) ToDomainCommission() model.Commission {
 
 	var dMessaging []model2.Messaging
 	for _, value := range c.Messages {
-		dMessaging = append(dMessaging, value.ToDomainMessaging())
+		dMessaging = append(dMessaging, value.ToDomainMessaging(c.ArtistID, c.RequesterID))
 	}
 
 	return model.Commission{
