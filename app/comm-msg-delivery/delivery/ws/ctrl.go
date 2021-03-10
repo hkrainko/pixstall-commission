@@ -91,15 +91,15 @@ func (c *CommissionMessageController) Run() {
 			default:
 				continue
 			}
-			b := []byte("reply" + string(message.Byte))
-			for client := range c.hub.clients {
-				select {
-				case client.send <- b:
-				default:
-					close(client.send)
-					delete(c.hub.clients, client)
-				}
-			}
+			//b := []byte("reply" + string(message.Byte))
+			//for client := range c.hub.clients {
+			//	select {
+			//	case client.send <- b:
+			//	default:
+			//		close(client.send)
+			//		delete(c.hub.clients, client)
+			//	}
+			//}
 		}
 	}
 }
