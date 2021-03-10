@@ -31,7 +31,7 @@ func (h *Hub) DeliverCommissionMessage(ctx context.Context, messaging model.Mess
 	}
 	for client := range h.clients {
 		if messaging.GetArtistID() == client.userId || messaging.GetRequesterID() == client.userId {
-			fmt.Printf("deliver comm msg to %v, msg:%v", client.userId, messaging)
+			fmt.Printf("deliver comm msg to %v, msg:%v", client.userId, string(j))
 			client.send <- j
 		}
 	}

@@ -3,6 +3,7 @@ package rabbitmq
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/streadway/amqp"
 	"log"
 	model2 "pixstall-commission/app/msg-broker/repo/rabbitmq/msg"
@@ -52,10 +53,8 @@ func (r rabbitmqMsgBrokerRepo) SendCommissionCreatedMessage(ctx context.Context,
 }
 
 func (r rabbitmqMsgBrokerRepo) SendCommissionMessageReceivedMessage(ctx context.Context, messaging dMsgModel.Messaging) error {
-	cCommMsg := model2.CommissionMessage{
-		Messaging: messaging,
-	}
-	b, err := json.Marshal(cCommMsg)
+	b, err := json.Marshal(messaging)
+	fmt.Printf("sent msg:%v", string(b))
 	if err != nil {
 		return err
 	}
