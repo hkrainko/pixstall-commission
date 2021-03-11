@@ -16,36 +16,43 @@ type Commission struct {
 	RequesterName        string  `json:"requesterName" bson:"requesterName"`
 	RequesterProfilePath *string `json:"requesterProfilePath" bson:"requesterProfilePath,omitempty"`
 
-	Price         Price    `json:"price" bson:"price"`
-	DayNeed       int      `json:"dayNeed" bson:"dayNeed"`
-	Size          *Size    `json:"size" bson:"size,omitempty"`
-	Resolution    *float64 `json:"resolution" bson:"resolution,omitempty"`
-	ExportFormat  *string  `json:"exportFormat" bson:"exportFormat,omitempty"`
-	Desc          string   `json:"desc" bson:"desc"`
-	PaymentMethod string   `json:"paymentMethod" bson:"paymentMethod"`
-	IsR18         bool     `json:"isR18" bson:"isR18"`
-	BePrivate     bool     `json:"bePrivate" bson:"bePrivate"`
-	Anonymous     bool     `json:"anonymous" bson:"anonymous"`
-	RefImagePaths []string `json:"refImagePaths" bson:"refImagePaths"`
+	Price                          Price    `json:"price" bson:"price"`
+	DayNeed                        int      `json:"dayNeed" bson:"dayNeed"`
+	Size                           *Size    `json:"size" bson:"size,omitempty"`
+	Resolution                     *float64 `json:"resolution" bson:"resolution,omitempty"`
+	ExportFormat                   *string  `json:"exportFormat" bson:"exportFormat,omitempty"`
+	Desc                           string   `json:"desc" bson:"desc"`
+	PaymentMethod                  string   `json:"paymentMethod" bson:"paymentMethod"`
+	IsR18                          bool     `json:"isR18" bson:"isR18"`
+	BePrivate                      bool     `json:"bePrivate" bson:"bePrivate"`
+	Anonymous                      bool     `json:"anonymous" bson:"anonymous"`
+	RefImagePaths                  []string `json:"refImagePaths" bson:"refImagePaths"`
+	TimesAllowedDraftToChange      *int     `json:"timesAllowedDraftToChange" bson:"timesAllowedDraftToChange"`
+	TimesAllowedCompletionToChange *int     `json:"timesAllowedCompletionToChange" bson:"timesAllowedCompletionToChange"`
+	DraftChangingRequestTime       int      `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
+	CompletionChangingRequestTime  int      `json:"completionChangingRequestTime" bson:"completionChangingRequestTime"`
 
 	Messages []model.Messaging `json:"messages" bson:"-"`
 
-	CreateTime         time.Time              `json:"createTime" bson:"createTime"`
-	CompleteTime       *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
-	LastUpdateTime     time.Time              `json:"lastUpdateTime" bson:"lastUpdateTime"`
+	CreateTime        time.Time              `json:"createTime" bson:"createTime"`
+	CompleteTime      *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
+	LastUpdateTime    time.Time              `json:"lastUpdateTime" bson:"lastUpdateTime"`
 	ValidationHistory []CommissionValidation `bson:"validationHistory"`
-	State              CommissionState        `json:"state" bson:"state"`
+	State             CommissionState        `json:"state" bson:"state"`
 }
 
 type CommissionState string
 
 const (
 	CommissionStatePendingValidation              CommissionState = "PENDING_VALIDATION"
-	CommissionStateInValidatedDueToOpenCommission CommissionState = "INVALIDATE_DUE_TO_OPEN_COMMISSION"
-	CommissionStateInValidatedDueToUsers          CommissionState = "INVALIDATE_DUE_TO_USERS"
+	CommissionStateInvalidatedDueToOpenCommission CommissionState = "INVALIDATE_DUE_TO_OPEN_COMMISSION"
+	CommissionStateInvalidatedDueToUsers          CommissionState = "INVALIDATE_DUE_TO_USERS"
 	CommissionStatePendingArtistApproval          CommissionState = "PENDING_ARTIST_APPROVAL"
-	CommissionStateRejectByArtist                 CommissionState = "REJECT_BY_ARTIST"
-	CommissionStateRejectByClient                 CommissionState = "REJECT_BY_CLIENT"
+	CommissionStateInProgress                     CommissionState = "IN_PROGRESS"
+	CommissionStatePendingRequesterAcceptance     CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
+	CommissionStateRejectedByArtist               CommissionState = "REJECTED_BY_ARTIST"
+	CommissionStateRejectedByRequester            CommissionState = "REJECTED_BY_REQUESTER"
+	CommissionStateCompleted                      CommissionState = "COMPLETED"
 )
 
 type CommissionValidation string

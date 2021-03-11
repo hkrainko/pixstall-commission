@@ -82,9 +82,9 @@ func (c commissionUseCase) OpenCommissionValidation(ctx context.Context, validat
 	}
 	updater := model.CommissionUpdater{ID: validation.ID}
 	if validation.IsValid {
-		updater = c.getCommValidationOpenCommUpdater(comm.ValidationHistory, updater)
+		updater = c.getCommValidationOpenCommUpdater(comm.ValidationHistory, updater, validation)
 	} else {
-		state := model.CommissionStateInValidatedDueToOpenCommission
+		state := model.CommissionStateInvalidatedDueToOpenCommission
 		updater.State = &state
 	}
 	return c.commRepo.UpdateCommission(ctx, updater)
@@ -102,7 +102,7 @@ func (c commissionUseCase) UsersValidation(ctx context.Context, validation model
 	if validation.IsValid {
 		updater = c.getCommValidationUsersUpdater(comm.ValidationHistory, updater, validation)
 	} else {
-		state := model.CommissionStateInValidatedDueToUsers
+		state := model.CommissionStateInvalidatedDueToUsers
 		updater.State = &state
 	}
 	return c.commRepo.UpdateCommission(ctx, updater)
@@ -113,6 +113,9 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 	comm, err := c.commRepo.GetCommission(ctx, msgCreator.CommissionID)
 	if err != nil {
 		return err
+	}
+	if !c.isStateAllowToSendMessage(comm.State) {
+		return model.CommissionErrorNotAllowSendMessage
 	}
 	messaging := newMessagingFromMessageCreator(msgCreator, comm.ArtistID, comm.RequesterID)
 
@@ -147,7 +150,7 @@ func (c commissionUseCase) storeRefImage(ctx context.Context, creator model.Comm
 	return nil, errors.New("storeRefImage failed")
 }
 
-func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater) model.CommissionUpdater {
+func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionOpenCommissionValidation) model.CommissionUpdater {
 	v := model.CommissionValidationOpenCommission
 	if isCommValid := c.isCommValidationCompletable(
 		history, v,
@@ -156,6 +159,8 @@ func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.Comm
 		updater.State = &newState
 	}
 	updater.Validation = &v
+	updater.TimesAllowedDraftToChange = validation.TimesAllowedDraftToChange
+	updater.TimesAllowedCompletionToChange = validation.TimesAllowedCompletionToChange
 	return updater
 }
 
@@ -191,4 +196,15 @@ func (c commissionUseCase) isCommValidationCompletable(validationHistory []model
 		}
 	}
 	return false
+}
+
+func (c commissionUseCase) isStateAllowToSendMessage(state model.CommissionState) bool {
+	switch state {
+	case model.CommissionStatePendingArtistApproval,
+	model.CommissionStateInProgress,
+	model.CommissionStatePendingRequesterAcceptance:
+		return true
+	default:
+		return false
+	}
 }
