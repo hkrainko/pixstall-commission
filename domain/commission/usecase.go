@@ -11,7 +11,8 @@ type UseCase interface {
 	GetCommissions(ctx context.Context, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error)
 	GetCommission(ctx context.Context, commId string) (*model.Commission, error)
 	GetWorks(ctx context.Context, artistID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error)
-	UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error
+	UpdateCommission(ctx context.Context, updater model.CommissionUpdater) error
+	UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater) error
 	OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error
 	UsersValidation(ctx context.Context, validation model.CommissionUsersValidation) error
 	HandleInboundCommissionMessage(ctx context.Context, msgCreator dMsgModel.MessageCreator) error

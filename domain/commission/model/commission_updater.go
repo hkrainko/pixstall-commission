@@ -13,4 +13,15 @@ type CommissionUpdater struct {
 	CompleteTime                   *time.Time `json:"completeTime"`
 	Validation                     *CommissionValidation
 	State                          *CommissionState `json:"state"`
+
+	// TODO: allow requester to edit before artist approval
+	Price         *Price
+	DayNeed       *int
+	Size          *Size
+	Resolution    *float64
+	ExportFormat  *string
+	Desc          *string
+	PaymentMethod *string
+	BePrivate     *bool
+	Anonymous     *bool
 }

@@ -288,7 +288,7 @@ func (c CommissionMessageBroker) updateCommission(ctx context.Context, body []by
 	if err != nil {
 		return err
 	}
-	return c.commUseCase.UpdateCommissions(ctx, req.Updater)
+	return c.commUseCase.UpdateCommission(ctx, req.Updater)
 }
 
 func (c CommissionMessageBroker) commOpenCommValidated(ctx context.Context, body []byte) error {

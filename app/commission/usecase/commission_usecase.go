@@ -68,7 +68,21 @@ func (c commissionUseCase) GetWorks(ctx context.Context, artistID string, filter
 	return c.commRepo.GetCommissions(ctx, filter, sorter)
 }
 
-func (c commissionUseCase) UpdateCommissions(ctx context.Context, updater model.CommissionUpdater) error {
+func (c commissionUseCase) UpdateCommission(ctx context.Context, updater model.CommissionUpdater) error {
+	return c.commRepo.UpdateCommission(ctx, updater)
+}
+
+func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater) error {
+	comm, err := c.commRepo.GetCommission(ctx, updater.ID)
+	if err != nil {
+		return err
+	}
+	if updater.State != nil {
+		err :=  c.isStateAllowToUpdateByUser(userId, *comm, *updater.State)
+		if err != nil {
+			return err
+		}
+	}
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
@@ -206,5 +220,65 @@ func (c commissionUseCase) isStateAllowToSendMessage(state model.CommissionState
 		return true
 	default:
 		return false
+	}
+}
+
+func (c commissionUseCase) isStateAllowToUpdateByUser(userId string, comm model.Commission, toState model.CommissionState) error {
+	if userId != comm.ArtistID && userId != comm.RequesterID {
+		return model.CommissionErrorUnAuth
+	}
+	switch comm.State {
+	case model.CommissionStatePendingValidation,
+	model.CommissionStateInvalidatedDueToOpenCommission,
+	model.CommissionStateInvalidatedDueToUsers:
+		return model.CommissionErrorStateNotAllowed
+	case model.CommissionStatePendingArtistApproval:
+		if userId == comm.ArtistID {
+			if toState == model.CommissionStateInProgress || toState == model.CommissionStateRejectedByArtist {
+				return nil
+			} else {
+				return model.CommissionErrorStateNotAllowed
+			}
+		} else {
+			if toState == model.CommissionStateRejectedByRequester {
+				return nil
+			} else {
+				return model.CommissionErrorStateNotAllowed
+			}
+		}
+	case model.CommissionStateInProgress:
+		if userId == comm.ArtistID {
+			if toState == model.CommissionStatePendingRequesterAcceptance {
+				return nil
+			} else {
+				return model.CommissionErrorStateNotAllowed
+			}
+		} else {
+			if toState == model.CommissionStateRejectedByRequester {
+				return nil
+			} else {
+				return model.CommissionErrorStateNotAllowed
+			}
+		}
+	case model.CommissionStatePendingRequesterAcceptance:
+		if userId == comm.RequesterID {
+			switch toState {
+			case model.CommissionStateCompleted:
+				return nil
+			case model.CommissionStateInProgress:
+				if comm.TimesAllowedCompletionToChange == nil ||
+					comm.CompletionChangingRequestTime < *comm.TimesAllowedCompletionToChange {
+					return nil
+				} else {
+					return model.CommissionErrorStateNotAllowed
+				}
+			default:
+				return model.CommissionErrorStateNotAllowed
+			}
+		} else {
+			return model.CommissionErrorStateNotAllowed
+		}
+	default:
+		return nil
 	}
 }

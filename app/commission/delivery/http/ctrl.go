@@ -11,6 +11,7 @@ import (
 	add_commission "pixstall-commission/app/commission/delivery/model/add-commission"
 	get_commission "pixstall-commission/app/commission/delivery/model/get-commission"
 	get_commissions "pixstall-commission/app/commission/delivery/model/get-commissions"
+	update_commission "pixstall-commission/app/commission/delivery/model/update-commission"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
 	"strconv"
@@ -187,8 +188,54 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 }
 
 func (c CommissionController) UpdateCommission(ctx *gin.Context) {
+	tokenUserID := ctx.GetString("userId")
+	if tokenUserID == "" {
+		ctx.AbortWithStatusJSON(add_commission.NewErrorResponse(model.CommissionErrorUnAuth))
+		return
+	}
+	updater := model.CommissionUpdater{}
+	commID, exist := ctx.GetPostForm("commissionId")
+	if !exist {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
 
+	if price, err := getPriceFromPostForm(ctx, "price"); err == nil {
+		updater.Price = price
+	}
+	if dayNeed, err := getDayNeed(ctx); err == nil {
+		updater.DayNeed = dayNeed
+	}
+	if size, err := getSize(ctx); err == nil {
+		updater.Size = size
+	}
+	if resolution, err := getResolution(ctx); err == nil {
+		updater.Resolution = resolution
+	}
+	if exportFormat, exist := ctx.GetPostForm("exportFormat"); exist {
+		updater.ExportFormat = &exportFormat
+	}
+	if desc, exist := ctx.GetPostForm("desc"); exist {
+		updater.Desc = &desc
+	}
+	if paymentMethod, exist := ctx.GetPostForm("paymentMethod"); exist {
+		updater.PaymentMethod = &paymentMethod
+	}
+	if bePrivate, exist := ctx.GetPostForm("bePrivate"); exist {
+		b := bePrivate == "true"
+		updater.BePrivate = &b
+	}
+	if anonymous, exist := ctx.GetPostForm("anonymous"); exist {
+		b := anonymous == "true"
+		updater.Anonymous = &b
+	}
 
+	err := c.commUseCase.UpdateCommissionByUser(ctx, tokenUserID, updater)
+	if err != nil {
+		ctx.JSON(update_commission.NewErrorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, update_commission.NewResponse(commID))
 }
 
 // Private methods

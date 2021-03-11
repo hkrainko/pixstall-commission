@@ -10,6 +10,16 @@ func (e CommissionError) Error() string {
 		return "CommissionErrorUnAuth"
 	case CommissionErrorStateNotAllowed:
 		return "CommissionErrorStateNotAllowed"
+	case CommissionErrorPriceInvalid:
+		return "CommissionErrorPriceInvalid"
+	case CommissionErrorDayNeedInvalid:
+		return "CommissionErrorDayNeedInvalid"
+	case CommissionErrorNotAllowBePrivate:
+		return "CommissionErrorNotAllowBePrivate"
+	case CommissionErrorNotAllowAnonymous:
+		return "CommissionErrorNotAllowAnonymous"
+	case CommissionErrorNotAllowSendMessage:
+		return "CommissionErrorNotAllowSendMessage"
 	default:
 		return "CommissionErrorUnknown"
 	}
@@ -23,6 +33,6 @@ const (
 	CommissionErrorDayNeedInvalid      CommissionError = 14
 	CommissionErrorNotAllowBePrivate   CommissionError = 15
 	CommissionErrorNotAllowAnonymous   CommissionError = 16
-	CommissionErrorNotAllowSendMessage CommissionError = 16
+	CommissionErrorNotAllowSendMessage CommissionError = 17
 	CommissionErrorUnknown             CommissionError = 99
 )
