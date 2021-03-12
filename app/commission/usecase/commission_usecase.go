@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"image"
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
-	"pixstall-commission/domain/image"
+	dImage "pixstall-commission/domain/image"
 	model2 "pixstall-commission/domain/image/model"
 	"pixstall-commission/domain/message"
 	model3 "pixstall-commission/domain/message/model"
@@ -16,7 +17,7 @@ import (
 
 type commissionUseCase struct {
 	commRepo      commission.Repo
-	imageRepo     image.Repo
+	imageRepo     dImage.Repo
 	msgBrokerRepo msgBroker.Repo
 	msgRepo       message.Repo
 	commMsgDeliRepo commMsgDelivery.Repo
@@ -24,7 +25,7 @@ type commissionUseCase struct {
 
 func NewCommissionUseCase(
 	commRepo commission.Repo,
-	imageRepo image.Repo,
+	imageRepo dImage.Repo,
 	msgBrokerRepo msgBroker.Repo,
 	msgRepo message.Repo,
 	commMsgDeliRepo commMsgDelivery.Repo,
@@ -40,7 +41,7 @@ func NewCommissionUseCase(
 
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error) {
 	// Upload
-	storedPaths, err := c.storeRefImage(ctx, creator)
+	storedPaths, err := c.storeImages(ctx, "commissions", "rf-" + creator.RequesterID + "-" + uuid.NewString(), creator.RefImages)
 	if err == nil {
 		creator.RefImagePaths = *storedPaths
 	}
@@ -122,8 +123,11 @@ func (c commissionUseCase) UsersValidation(ctx context.Context, validation model
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
-func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) error {
+func (c commissionUseCase) GetMessages(ctx context.Context, userId string, commId string, offset int, count int) ([]model3.Messaging, error) {
+	return c.msgRepo.GetMessages(ctx, userId, commId, offset, count)
+}
 
+func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) error {
 	comm, err := c.commRepo.GetCommission(ctx, msgCreator.CommissionID)
 	if err != nil {
 		return err
@@ -131,9 +135,15 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 	if !c.isStateAllowToSendMessage(comm.State) {
 		return model.CommissionErrorNotAllowSendMessage
 	}
+	if msgCreator.Image != nil {
+		storedPaths, err := c.storeImage(ctx, "messages", "img-msg-" + msgCreator.CommissionID + "-" + uuid.NewString(), *msgCreator.Image)
+		if err == nil {
+			msgCreator.ImagePath = storedPaths
+		}
+	}
 	messaging := newMessagingFromMessageCreator(msgCreator, comm.ArtistID, comm.RequesterID)
 
-	err = c.msgRepo.AddNewMessage(ctx, messaging)
+	err = c.msgRepo.AddNewMessage(ctx, msgCreator.Form, messaging)
 	if err != nil {
 		return err
 	}
@@ -146,13 +156,13 @@ func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, 
 }
 
 // Private
-func (c commissionUseCase) storeRefImage(ctx context.Context, creator model.CommissionCreator) (*[]string, error) {
-	if len(creator.RefImages) > 0 {
-		pathImages := make([]model2.PathImage, 0, len(creator.RefImages))
-		for _, refImage := range creator.RefImages {
+func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []image.Image) (*[]string, error) {
+	if len(images) > 0 {
+		pathImages := make([]model2.PathImage, 0, len(images))
+		for _, refImage := range images {
 			pathImages = append(pathImages, model2.PathImage{
-				Path:  "commissions/",
-				Name:  "RF-" + creator.RequesterID + "-" + uuid.NewString(),
+				Path:  path + "/",
+				Name:  name,
 				Image: refImage,
 			})
 		}
@@ -162,6 +172,19 @@ func (c commissionUseCase) storeRefImage(ctx context.Context, creator model.Comm
 		}
 	}
 	return nil, errors.New("storeRefImage failed")
+}
+
+func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image image.Image) (*string, error) {
+	pathImage := model2.PathImage{
+		Path:  path + "/",
+		Name:  name,
+		Image: image,
+	}
+	savedPath, err := c.imageRepo.SaveImage(ctx, pathImage)
+	if err != nil {
+		return nil, err
+	}
+	return savedPath, nil
 }
 
 func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionOpenCommissionValidation) model.CommissionUpdater {

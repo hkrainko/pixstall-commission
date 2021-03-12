@@ -37,6 +37,7 @@ func NewFromMessaging(d model.Messaging) *Message {
 		msg.Text = &v.Text
 	case model.ImageMessage:
 		msg.From = &v.From
+		msg.Text = v.Text
 		msg.ImagePath = &v.ImagePath
 	case model.SystemMessage:
 		msg.Text = &v.Text

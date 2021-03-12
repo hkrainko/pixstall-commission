@@ -9,11 +9,14 @@ import (
 	_ "image/png"
 	"net/http"
 	add_commission "pixstall-commission/app/commission/delivery/model/add-commission"
+	create_message "pixstall-commission/app/commission/delivery/model/create-message"
 	get_commission "pixstall-commission/app/commission/delivery/model/get-commission"
 	get_commissions "pixstall-commission/app/commission/delivery/model/get-commissions"
+	get_messages "pixstall-commission/app/commission/delivery/model/get-messages"
 	update_commission "pixstall-commission/app/commission/delivery/model/update-commission"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
+	model2 "pixstall-commission/domain/message/model"
 	"strconv"
 	"time"
 )
@@ -31,7 +34,7 @@ func NewCommissionController(commUseCase commission.UseCase) CommissionControlle
 func (c CommissionController) GetCommissions(ctx *gin.Context) {
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
-		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
 	filter, err := getFilter(ctx)
@@ -47,7 +50,7 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 	}
 	commissions, err := c.commUseCase.GetCommissions(ctx, *filter, *sorter)
 	if err != nil {
-		ctx.JSON(get_commissions.NewErrorResponse(err))
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *commissions, filter.Offset, filter.Count))
@@ -56,13 +59,13 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 func (c CommissionController) GetCommission(ctx *gin.Context) {
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
-		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
 	commId := ctx.Param("id")
 	comm, err := c.commUseCase.GetCommission(ctx, commId)
 	if err != nil {
-		ctx.JSON(get_commission.NewErrorResponse(err))
+		ctx.AbortWithStatusJSON(get_commission.NewErrorResponse(err))
 		return
 	}
 	ctx.JSON(http.StatusOK, get_commission.NewResponse(*comm))
@@ -71,7 +74,7 @@ func (c CommissionController) GetCommission(ctx *gin.Context) {
 func (c CommissionController) GetCommissionDetails(ctx *gin.Context) {
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
-		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
 	commId := ctx.Param("id")
@@ -81,13 +84,73 @@ func (c CommissionController) GetCommissionDetails(ctx *gin.Context) {
 }
 
 func (c CommissionController) GetMessages(ctx *gin.Context) {
+	commId := ctx.Param("id")
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
-		ctx.JSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		return
+	}
+	offset, err := strconv.Atoi(ctx.Query("offset"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
+	count, err := strconv.Atoi(ctx.Query("offset"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
 
-	// TODO
+	msgs, err := c.commUseCase.GetMessages(ctx, tokenUserID, commId, offset, count)
+	if err != nil {
+		ctx.AbortWithStatusJSON(get_messages.NewErrorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, get_messages.NewResponse(commId, msgs))
+}
+
+func (c CommissionController) CreateMessage(ctx *gin.Context) {
+	commId := ctx.Param("id")
+	if commId == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
+	tokenUserID := ctx.GetString("userId")
+	if tokenUserID == "" {
+		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
+		return
+	}
+	msgCreator := model2.MessageCreator{CommissionID: commId, Form: &tokenUserID}
+	text := ctx.PostForm("text")
+	msgCreator.Text = text
+	fileHeader, err := ctx.FormFile("image")
+	if err == nil {
+		decodedImg := func() image.Image {
+			if err != nil {
+				return nil
+			}
+			f, err := fileHeader.Open()
+			if err != nil {
+				return nil
+			}
+			img, _, err := image.Decode(f)
+			if err != nil {
+				return nil
+			}
+			return img
+		}()
+		msgCreator.Image = &decodedImg
+	}
+	if msgCreator.Text == "" && msgCreator.Image == nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
+	err = c.commUseCase.HandleInboundCommissionMessage(ctx, msgCreator)
+	if err != nil {
+		ctx.AbortWithStatusJSON(create_message.NewErrorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, create_message.NewResponse())
 }
 
 func (c CommissionController) AddCommission(ctx *gin.Context) {

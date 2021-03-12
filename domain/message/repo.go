@@ -6,6 +6,6 @@ import (
 )
 
 type Repo interface {
-	AddNewMessage(ctx context.Context, messaging model.Messaging) error
-	GetMessages(ctx context.Context, commId string, offset int, count int) ([]model.Messaging, error)
+	AddNewMessage(ctx context.Context, userId *string, messaging model.Messaging) error
+	GetMessages(ctx context.Context, userId string, commId string, offset int, count int) ([]model.Messaging, error)
 }

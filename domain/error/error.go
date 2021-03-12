@@ -8,6 +8,8 @@ func (e DomainError) Error() string {
 	switch e {
 	case UnknownError:
 		return "UnknownError"
+	case UnAuthError:
+		return "UnAuthError"
 	default:
 		return strconv.Itoa(int(e))
 	}
@@ -15,5 +17,6 @@ func (e DomainError) Error() string {
 
 const (
 	NotFoundError DomainError = 10
+	UnAuthError DomainError = 11
 	UnknownError DomainError = 99
 )
