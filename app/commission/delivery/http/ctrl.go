@@ -95,7 +95,7 @@ func (c CommissionController) GetMessages(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-	count, err := strconv.Atoi(ctx.Query("offset"))
+	count, err := strconv.Atoi(ctx.Query("count"))
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return

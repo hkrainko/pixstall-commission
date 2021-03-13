@@ -63,11 +63,11 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, commId
 			return nil, dError.UnknownError
 		}
 	}
-	var dMessaging []model.Messaging
+	var dMessagings []model.Messaging
 	for _, daoMsg := range comm.Messages {
-		dMessaging = append(dMessaging, daoMsg.ToDomainMessaging(comm.ArtistID, comm.RequesterID))
+		dMessagings = append(dMessagings, daoMsg.ToDomainMessaging(comm.ArtistID, comm.RequesterID))
 	}
-	return dMessaging, nil
+	return dMessagings, nil
 }
 
 // Private
