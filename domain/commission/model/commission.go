@@ -45,8 +45,8 @@ type CommissionState string
 
 const (
 	CommissionStatePendingValidation              CommissionState = "PENDING_VALIDATION"
-	CommissionStateInvalidatedDueToOpenCommission CommissionState = "INVALIDATE_DUE_TO_OPEN_COMMISSION"
-	CommissionStateInvalidatedDueToUsers          CommissionState = "INVALIDATE_DUE_TO_USERS"
+	CommissionStateInvalidatedDueToOpenCommission CommissionState = "INVALIDATED_DUE_TO_OPEN_COMMISSION"
+	CommissionStateInvalidatedDueToUsers          CommissionState = "INVALIDATED_DUE_TO_USERS"
 	CommissionStatePendingArtistApproval          CommissionState = "PENDING_ARTIST_APPROVAL"
 	CommissionStateInProgress                     CommissionState = "IN_PROGRESS"
 	CommissionStatePendingRequesterAcceptance     CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
