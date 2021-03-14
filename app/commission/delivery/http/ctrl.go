@@ -84,7 +84,7 @@ func (c CommissionController) GetCommissionDetails(ctx *gin.Context) {
 }
 
 func (c CommissionController) GetMessages(ctx *gin.Context) {
-	commId := ctx.Param("id")
+	commID := ctx.Param("id")
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
 		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
@@ -101,12 +101,12 @@ func (c CommissionController) GetMessages(ctx *gin.Context) {
 		return
 	}
 
-	msgs, err := c.commUseCase.GetMessages(ctx, tokenUserID, commId, offset, count)
+	msgs, err := c.commUseCase.GetMessages(ctx, tokenUserID, commID, offset, count)
 	if err != nil {
 		ctx.AbortWithStatusJSON(get_messages.NewErrorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, get_messages.NewResponse(commId, msgs))
+	ctx.JSON(http.StatusOK, get_messages.NewResponse(commID, msgs))
 }
 
 func (c CommissionController) CreateMessage(ctx *gin.Context) {
@@ -251,18 +251,23 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 }
 
 func (c CommissionController) UpdateCommission(ctx *gin.Context) {
+	commID := ctx.Param("id")
+	if commID == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
+	}
 	tokenUserID := ctx.GetString("userId")
 	if tokenUserID == "" {
 		ctx.AbortWithStatusJSON(add_commission.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
-	updater := model.CommissionUpdater{}
-	commID, exist := ctx.GetPostForm("commissionId")
-	if !exist {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
-		return
+	updater := model.CommissionUpdater{
+		ID: commID,
 	}
-
+	if state, exist := ctx.GetPostForm("state"); exist {
+		commState := model.CommissionState(state)
+		updater.State = &commState
+	}
 	if price, err := getPriceFromPostForm(ctx, "price"); err == nil {
 		updater.Price = price
 	}
