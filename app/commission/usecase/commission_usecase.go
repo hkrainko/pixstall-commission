@@ -84,7 +84,18 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 			return err
 		}
 	}
-	return c.commRepo.UpdateCommission(ctx, updater)
+	err = c.commRepo.UpdateCommission(ctx, updater)
+	if err != nil {
+		return err
+	}
+
+
+	//err = c.msgRepo.AddNewMessage(ctx, nil, msg)
+	//if err != nil {
+	//	_ = c.commMsgDeliRepo.DeliverCommissionMessage(ctx, msg)
+	//}
+	//Ignore the error from sending message as we only care the state changed
+	return nil
 }
 
 func (c commissionUseCase) OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error {
@@ -141,9 +152,9 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 			msgCreator.ImagePath = storedPaths
 		}
 	}
-	messaging := newMessagingFromMessageCreator(msgCreator, comm.ArtistID, comm.RequesterID)
+	messaging := newMessagingFromUser(msgCreator, comm.ArtistID, comm.RequesterID)
 
-	err = c.msgRepo.AddNewMessage(ctx, msgCreator.Form, messaging)
+	err = c.msgRepo.AddNewMessage(ctx, &msgCreator.Form, messaging)
 	if err != nil {
 		return err
 	}

@@ -198,12 +198,12 @@ func (c CommissionMessageBroker) StartCommissionValidatedQueue() {
 func (c CommissionMessageBroker) StartCommissionMessageDeliverQueue() {
 	//TODO
 	q, err := c.ch.QueueDeclare(
-		"", // name
-		false,                   // durable
-		true,                  // delete when unused
-		false,                  // exclusive
-		false,                  // no-wait
-		nil,                    // arguments
+		"",    // name
+		false, // durable
+		true,  // delete when unused
+		false, // exclusive
+		false, // no-wait
+		nil,   // arguments
 	)
 	if err != nil {
 		log.Fatalf("Failed to declare a queue %v", err)
@@ -346,9 +346,37 @@ func (c CommissionMessageBroker) getMessage(body []byte) (model.Messaging, error
 		if err != nil {
 			return nil, err
 		}
-		return &result, nil
+		return c.getSystemMessage(body, result.SystemMessageType)
 	default:
 		break
 	}
 	return nil, errors.New("unknown message type")
+}
+
+func (c CommissionMessageBroker) getSystemMessage(body []byte, systemMessageType model.SystemMessageType) (model.Messaging, error) {
+	switch systemMessageType {
+	case model.SystemMessageTypePlain:
+		var result model.PlainSystemMessage
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			return nil, err
+		}
+		return &result, nil
+	case model.SystemMessageTypeProofCopy:
+		var result model.ProofCopySystemMessage
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			return nil, err
+		}
+		return &result, nil
+	case model.SystemMessageTypeCompletion:
+		var result model.CompletionSystemMessage
+		err := json.Unmarshal(body, &result)
+		if err != nil {
+			return nil, err
+		}
+		return &result, nil
+	default:
+		return nil, errors.New("unknown message type")
+	}
 }

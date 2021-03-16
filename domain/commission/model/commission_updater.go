@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"image"
+	"time"
+)
 
 type CommissionUpdater struct {
 	ID                             string     `json:"id"`
@@ -13,6 +16,9 @@ type CommissionUpdater struct {
 	CompleteTime                   *time.Time `json:"completeTime"`
 	Validation                     *CommissionValidation
 	State                          *CommissionState `json:"state"`
+	CompletionFile                 *[]byte          `json:"completionFile"`
+	DisplayImage                   *image.Image     `json:"displayImage"`
+	ProofCopyImage                 *image.Image     `json:"proofCopyImage"`
 
 	// TODO: allow requester to edit before artist approval
 	Price         *Price

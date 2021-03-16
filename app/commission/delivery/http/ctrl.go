@@ -120,7 +120,7 @@ func (c CommissionController) CreateMessage(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
-	msgCreator := model2.MessageCreator{CommissionID: commId, Form: &tokenUserID}
+	msgCreator := model2.MessageCreator{CommissionID: commId, Form: tokenUserID}
 	text := ctx.PostForm("text")
 	msgCreator.Text = text
 	fileHeader, err := ctx.FormFile("image")

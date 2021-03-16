@@ -44,15 +44,17 @@ type Commission struct {
 type CommissionState string
 
 const (
-	CommissionStatePendingValidation              CommissionState = "PENDING_VALIDATION"
-	CommissionStateInvalidatedDueToOpenCommission CommissionState = "INVALIDATED_DUE_TO_OPEN_COMMISSION"
-	CommissionStateInvalidatedDueToUsers          CommissionState = "INVALIDATED_DUE_TO_USERS"
-	CommissionStatePendingArtistApproval          CommissionState = "PENDING_ARTIST_APPROVAL"
-	CommissionStateInProgress                     CommissionState = "IN_PROGRESS"
-	CommissionStatePendingRequesterAcceptance     CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
-	CommissionStateRejectedByArtist               CommissionState = "REJECTED_BY_ARTIST"
-	CommissionStateRejectedByRequester            CommissionState = "REJECTED_BY_REQUESTER"
-	CommissionStateCompleted                      CommissionState = "COMPLETED"
+	CommissionStatePendingValidation                       CommissionState = "PENDING_VALIDATION"
+	CommissionStateInvalidatedDueToOpenCommission          CommissionState = "INVALIDATED_DUE_TO_OPEN_COMMISSION"
+	CommissionStateInvalidatedDueToUsers                   CommissionState = "INVALIDATED_DUE_TO_USERS"
+	CommissionStatePendingArtistApproval                   CommissionState = "PENDING_ARTIST_APPROVAL"
+	CommissionStateInProgress                              CommissionState = "IN_PROGRESS"
+	CommissionStatePendingRequesterAcceptance              CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
+	CommissionStateRejectedByArtist                        CommissionState = "REJECTED_BY_ARTIST"
+	CommissionStateRejectedByRequester                     CommissionState = "REJECTED_BY_REQUESTER"
+	CommissionStatePendingUploadProduct                    CommissionState = "PENDING_UPLOAD_PRODUCT"
+	CommissionStatePendingUploadProductDueToRevisionExceed CommissionState = "PENDING_UPLOAD_PRODUCT_DUE_TO_REVISION_EXCEED"
+	CommissionStateCompleted                               CommissionState = "COMPLETED"
 )
 
 type CommissionValidation string

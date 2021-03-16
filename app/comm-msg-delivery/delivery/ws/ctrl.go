@@ -1,7 +1,6 @@
 package ws
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -71,21 +70,24 @@ func (c *CommissionMessageController) Run() {
 				continue
 			}
 			msgType := dat.Type
+
+			//Not implemented as message will be sent by http
 			switch msgType {
 			case "chat":
-				var wsCreator = msg.WSMessageCreator{}
-				err := json.Unmarshal(message.Byte, &wsCreator)
-				if err != nil {
-					fmt.Printf("err2: %v\n", err.Error())
-					continue
-				}
-				wsCreator.Form = &message.UserID // memory leak?
-				fmt.Printf("%v", wsCreator)
-				ctx := context.Background()
-				err = c.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
-				if err != nil {
-					// TODO: reply error to client
-				}
+				fmt.Printf("cmd")
+				//var wsCreator = msg.WSMessageCreator{}
+				//err := json.Unmarshal(message.Byte, &wsCreator)
+				//if err != nil {
+				//	fmt.Printf("err2: %v\n", err.Error())
+				//	continue
+				//}
+				//wsCreator.Form = &message.UserID // memory leak?
+				//fmt.Printf("%v", wsCreator)
+				//ctx := context.Background()
+				//err = c.commUseCase.HandleInboundCommissionMessage(ctx, wsCreator.MessageCreator)
+				//if err != nil {
+				//	// TODO: reply error to client
+				//}
 			case "cmd":
 				fmt.Printf("cmd")
 			default:
