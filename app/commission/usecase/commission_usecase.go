@@ -8,6 +8,7 @@ import (
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
+	error2 "pixstall-commission/domain/error"
 	dImage "pixstall-commission/domain/image"
 	model2 "pixstall-commission/domain/image/model"
 	"pixstall-commission/domain/message"
@@ -16,10 +17,10 @@ import (
 )
 
 type commissionUseCase struct {
-	commRepo      commission.Repo
-	imageRepo     dImage.Repo
-	msgBrokerRepo msgBroker.Repo
-	msgRepo       message.Repo
+	commRepo        commission.Repo
+	imageRepo       dImage.Repo
+	msgBrokerRepo   msgBroker.Repo
+	msgRepo         message.Repo
 	commMsgDeliRepo commMsgDelivery.Repo
 }
 
@@ -29,19 +30,19 @@ func NewCommissionUseCase(
 	msgBrokerRepo msgBroker.Repo,
 	msgRepo message.Repo,
 	commMsgDeliRepo commMsgDelivery.Repo,
-	) commission.UseCase {
+) commission.UseCase {
 	return &commissionUseCase{
-		commRepo:      commRepo,
-		imageRepo:     imageRepo,
-		msgBrokerRepo: msgBrokerRepo,
-		msgRepo:       msgRepo,
+		commRepo:        commRepo,
+		imageRepo:       imageRepo,
+		msgBrokerRepo:   msgBrokerRepo,
+		msgRepo:         msgRepo,
 		commMsgDeliRepo: commMsgDeliRepo,
 	}
 }
 
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error) {
 	// Upload
-	storedPaths, err := c.storeImages(ctx, "commissions", "rf-" + creator.RequesterID + "-" + uuid.NewString(), creator.RefImages)
+	storedPaths, err := c.storeImages(ctx, "commissions", "rf-"+creator.RequesterID+"-"+uuid.NewString(), creator.RefImages)
 	if err == nil {
 		creator.RefImagePaths = *storedPaths
 	}
@@ -73,22 +74,19 @@ func (c commissionUseCase) UpdateCommission(ctx context.Context, updater model.C
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
-func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater) error {
+func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater, decision model.CommissionDecision) error {
 	comm, err := c.commRepo.GetCommission(ctx, updater.ID)
 	if err != nil {
 		return err
 	}
-	if updater.State != nil {
-		err :=  c.isStateAllowToUpdateByUser(userId, *comm, *updater.State)
-		if err != nil {
-			return err
-		}
-	}
-	err = c.commRepo.UpdateCommission(ctx, updater)
+	filteredUpdater, err := c.getFilteredUpdater(userId, *comm, updater, decision)
 	if err != nil {
 		return err
 	}
-
+	err = c.commRepo.UpdateCommission(ctx, *filteredUpdater)
+	if err != nil {
+		return err
+	}
 
 	//err = c.msgRepo.AddNewMessage(ctx, nil, msg)
 	//if err != nil {
@@ -147,7 +145,7 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 		return model.CommissionErrorNotAllowSendMessage
 	}
 	if msgCreator.Image != nil {
-		storedPaths, err := c.storeImage(ctx, "messages", "img-msg-" + msgCreator.CommissionID + "-" + uuid.NewString(), *msgCreator.Image)
+		storedPaths, err := c.storeImage(ctx, "messages", "img-msg-"+msgCreator.CommissionID+"-"+uuid.NewString(), *msgCreator.Image)
 		if err == nil {
 			msgCreator.ImagePath = storedPaths
 		}
@@ -249,70 +247,102 @@ func (c commissionUseCase) isCommValidationCompletable(validationHistory []model
 func (c commissionUseCase) isStateAllowToSendMessage(state model.CommissionState) bool {
 	switch state {
 	case model.CommissionStatePendingArtistApproval,
-	model.CommissionStateInProgress,
-	model.CommissionStatePendingRequesterAcceptance:
+		model.CommissionStateInProgress,
+		model.CommissionStatePendingRequesterAcceptance:
 		return true
 	default:
 		return false
 	}
 }
 
-func (c commissionUseCase) isStateAllowToUpdateByUser(userId string, comm model.Commission, toState model.CommissionState) error {
-	if userId != comm.ArtistID && userId != comm.RequesterID {
-		return model.CommissionErrorUnAuth
+func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commission, updater model.CommissionUpdater, decision model.CommissionDecision) (*model.CommissionUpdater, error) {
+	err := c.isDecisionAllowToMadeByUser(userID, comm, updater, decision)
+	if err != nil {
+		return nil, err
 	}
-	switch comm.State {
-	case model.CommissionStatePendingValidation,
-	model.CommissionStateInvalidatedDueToOpenCommission,
-	model.CommissionStateInvalidatedDueToUsers:
-		return model.CommissionErrorStateNotAllowed
-	case model.CommissionStatePendingArtistApproval:
-		if userId == comm.ArtistID {
-			if toState == model.CommissionStateInProgress || toState == model.CommissionStateRejectedByArtist {
-				return nil
-			} else {
-				return model.CommissionErrorStateNotAllowed
-			}
-		} else {
-			if toState == model.CommissionStateRejectedByRequester {
-				return nil
-			} else {
-				return model.CommissionErrorStateNotAllowed
-			}
+	result := model.CommissionUpdater{ID: updater.ID}
+	switch decision {
+	case model.CommissionDecisionRequesterModify:
+		state := model.CommissionStatePendingRequesterModificationValidation
+		//TODO, check price....
+		result.State = &state
+	case model.CommissionDecisionArtistAccept:
+		state := model.CommissionStateInProgress
+		result.State = &state
+	case model.CommissionDecisionArtistDecline:
+		state := model.CommissionStateDeclinedByArtist
+		result.State = &state
+	case model.CommissionDecisionRequesterReject:
+		state := model.CommissionStateRejectedByRequester
+		result.State = &state
+	case model.CommissionDecisionArtistUploadProofCopy:
+		state := model.CommissionStatePendingRequesterAcceptance
+		result.State = &state
+		result.ProofCopyImage = updater.ProofCopyImage
+	case model.CommissionDecisionRequesterAcceptProofCopy:
+		state := model.CommissionStatePendingUploadProduct
+		result.State = &state
+	case model.CommissionDecisionRequesterRequestRevision:
+		state := model.CommissionStatePendingUploadProduct
+		result.State = &state
+		compRevReqTime := comm.CompletionRevisionRequestTime + 1
+		result.CompletionRevisionRequestTime = &compRevReqTime
+	case model.CommissionDecisionArtistUploadProduct:
+		state := model.CommissionStatePendingPendingRequesterAcceptProduct
+		result.State = &state
+		result.DisplayImage = updater.DisplayImage
+		result.CompletionFile = updater.CompletionFile
+	case model.CommissionDecisionRequesterAcceptProduct:
+		state := model.CommissionStateCompleted
+		result.State = &state
+		result.Rating = updater.Rating
+		result.Comment = updater.Comment
+	}
+	return nil, model.CommissionErrorDecisionNotAllowed
+}
+
+func (c commissionUseCase) isDecisionAllowToMadeByUser(userID string, comm model.Commission, updater model.CommissionUpdater, decision model.CommissionDecision) error {
+	if userID != comm.ArtistID && userID != comm.RequesterID {
+		return error2.UnAuthError
+	}
+	switch decision {
+	case model.CommissionDecisionRequesterModify:
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingArtistApproval {
+			return nil
 		}
-	case model.CommissionStateInProgress:
-		if userId == comm.ArtistID {
-			if toState == model.CommissionStatePendingRequesterAcceptance {
-				return nil
-			} else {
-				return model.CommissionErrorStateNotAllowed
-			}
-		} else {
-			if toState == model.CommissionStateRejectedByRequester {
-				return nil
-			} else {
-				return model.CommissionErrorStateNotAllowed
-			}
+	case model.CommissionDecisionArtistAccept, model.CommissionDecisionArtistDecline:
+		if userID == comm.ArtistID && comm.State == model.CommissionStatePendingArtistApproval {
+			return nil
 		}
-	case model.CommissionStatePendingRequesterAcceptance:
-		if userId == comm.RequesterID {
-			switch toState {
-			case model.CommissionStateCompleted:
-				return nil
-			case model.CommissionStateInProgress:
-				if comm.TimesAllowedCompletionToChange == nil ||
-					comm.CompletionChangingRequestTime < *comm.TimesAllowedCompletionToChange {
-					return nil
-				} else {
-					return model.CommissionErrorStateNotAllowed
-				}
-			default:
-				return model.CommissionErrorStateNotAllowed
+	case model.CommissionDecisionRequesterReject:
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingArtistApproval {
+			return nil
+		}
+	case model.CommissionDecisionArtistUploadProofCopy:
+		if userID == comm.ArtistID && comm.State == model.CommissionStateInProgress && updater.ProofCopyImage != nil {
+			return nil
+		}
+	case model.CommissionDecisionRequesterAcceptProofCopy:
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingRequesterAcceptance {
+			return nil
+		}
+	case model.CommissionDecisionRequesterRequestRevision:
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingRequesterAcceptance {
+			if comm.TimesAllowedCompletionToChange != nil && comm.CompletionRevisionRequestTime >= *comm.TimesAllowedCompletionToChange {
+				return model.CommissionErrorRevisionExceed
 			}
-		} else {
-			return model.CommissionErrorStateNotAllowed
+			return nil
+		}
+	case model.CommissionDecisionArtistUploadProduct:
+		if userID == comm.ArtistID && comm.State == model.CommissionStatePendingUploadProduct && updater.CompletionFile != nil {
+			return nil
+		}
+	case model.CommissionDecisionRequesterAcceptProduct:
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingPendingRequesterAcceptProduct && updater.Rating != nil {
+			return nil
 		}
 	default:
-		return nil
+		return model.CommissionErrorDecisionNotAllowed
 	}
+	return model.CommissionErrorDecisionNotAllowed
 }

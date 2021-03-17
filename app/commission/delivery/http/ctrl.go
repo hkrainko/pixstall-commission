@@ -7,6 +7,7 @@ import (
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
+	"mime/multipart"
 	"net/http"
 	add_commission "pixstall-commission/app/commission/delivery/model/add-commission"
 	create_message "pixstall-commission/app/commission/delivery/model/create-message"
@@ -237,9 +238,9 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 		return
 	}
 
-	refImage, err := getRefImages(ctx)
+	refImages, err := getMultipartFormImages(ctx, "refImages")
 	if err == nil {
-		creator.RefImages = *refImage
+		creator.RefImages = *refImages
 	}
 	
 	comm, err := c.commUseCase.AddCommission(ctx, creator)
@@ -264,9 +265,11 @@ func (c CommissionController) UpdateCommission(ctx *gin.Context) {
 	updater := model.CommissionUpdater{
 		ID: commID,
 	}
-	if state, exist := ctx.GetPostForm("state"); exist {
-		commState := model.CommissionState(state)
-		updater.State = &commState
+
+	decision, exist := ctx.GetPostForm("decision")
+	if !exist {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+		return
 	}
 	if price, err := getPriceFromPostForm(ctx, "price"); err == nil {
 		updater.Price = price
@@ -297,8 +300,34 @@ func (c CommissionController) UpdateCommission(ctx *gin.Context) {
 		b := anonymous == "true"
 		updater.Anonymous = &b
 	}
+	if rating, exist := ctx.GetPostForm("rating"); exist {
+		r, err := strconv.Atoi(rating)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
+			return
+		}
+		updater.Rating = &r
+	}
+	if comment, exist := ctx.GetPostForm("comment"); exist {
+		updater.Comment = &comment
+	}
+	displayImages, err := getMultipartFormImages(ctx, "displayImage")
+	if err == nil {
+		images := *displayImages
+		updater.DisplayImage = &images[0]
+	}
+	proofCopyImages, err := getMultipartFormImages(ctx, "proofCopyImage")
+	if err == nil {
+		images := *proofCopyImages
+		updater.ProofCopyImage = &images[0]
+	}
+	completionFiles, err := getMultipartFormFiles(ctx, "completionFile")
+	if err == nil {
+		files := *completionFiles
+		updater.CompletionFile = &files[0]
+	}
 
-	err := c.commUseCase.UpdateCommissionByUser(ctx, tokenUserID, updater)
+	err = c.commUseCase.UpdateCommissionByUser(ctx, tokenUserID, updater, model.CommissionDecision(decision))
 	if err != nil {
 		ctx.JSON(update_commission.NewErrorResponse(err))
 		return
@@ -397,12 +426,12 @@ func getResolution(ctx *gin.Context) (*float64, error) {
 	return &result, nil
 }
 
-func getRefImages(ctx *gin.Context) (*[]image.Image, error) {
+func getMultipartFormImages(ctx *gin.Context, key string) (*[]image.Image, error) {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
-	fileHeaders := form.File["refImages"]
+	fileHeaders := form.File[key]
 	images := make([]image.Image, 0)
 	for _, header := range fileHeaders {
 		decodedImage := func() image.Image {
@@ -427,6 +456,34 @@ func getRefImages(ctx *gin.Context) (*[]image.Image, error) {
 		return nil, errors.New("")
 	}
 	return &images, nil
+}
+
+func getMultipartFormFiles(ctx *gin.Context, key string) (*[]multipart.File, error) {
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		return nil, err
+	}
+	fileHeaders := form.File[key]
+	files := make([]multipart.File, 0)
+	for _, header := range fileHeaders {
+		decodedFile := func() multipart.File {
+			if err != nil {
+				return nil
+			}
+			f, err := header.Open()
+			if err != nil {
+				return nil
+			}
+			return f
+		}()
+		if decodedFile != nil {
+			files = append(files, decodedFile)
+		}
+	}
+	if len(files) <= 0 {
+		return nil, errors.New("")
+	}
+	return &files, nil
 }
 
 func getFilter(ctx *gin.Context) (*model.CommissionFilter, error) {

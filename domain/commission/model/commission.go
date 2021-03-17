@@ -30,7 +30,7 @@ type Commission struct {
 	TimesAllowedDraftToChange      *int     `json:"timesAllowedDraftToChange" bson:"timesAllowedDraftToChange"`
 	TimesAllowedCompletionToChange *int     `json:"timesAllowedCompletionToChange" bson:"timesAllowedCompletionToChange"`
 	DraftChangingRequestTime       int      `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
-	CompletionChangingRequestTime  int      `json:"completionChangingRequestTime" bson:"completionChangingRequestTime"`
+	CompletionRevisionRequestTime  int      `json:"completionRevisionRequestTime" bson:"completionRevisionRequestTime"`
 
 	Messages []model.Messaging `json:"messages" bson:"-"`
 
@@ -48,13 +48,29 @@ const (
 	CommissionStateInvalidatedDueToOpenCommission          CommissionState = "INVALIDATED_DUE_TO_OPEN_COMMISSION"
 	CommissionStateInvalidatedDueToUsers                   CommissionState = "INVALIDATED_DUE_TO_USERS"
 	CommissionStatePendingArtistApproval                   CommissionState = "PENDING_ARTIST_APPROVAL"
+	CommissionStatePendingRequesterModificationValidation  CommissionState = "PENDING_REQUESTER_MODIFICATION_VALIDATION"
 	CommissionStateInProgress                              CommissionState = "IN_PROGRESS"
 	CommissionStatePendingRequesterAcceptance              CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
-	CommissionStateRejectedByArtist                        CommissionState = "REJECTED_BY_ARTIST"
+	CommissionStateDeclinedByArtist                        CommissionState = "DECLINED_BY_ARTIST"
 	CommissionStateRejectedByRequester                     CommissionState = "REJECTED_BY_REQUESTER"
 	CommissionStatePendingUploadProduct                    CommissionState = "PENDING_UPLOAD_PRODUCT"
 	CommissionStatePendingUploadProductDueToRevisionExceed CommissionState = "PENDING_UPLOAD_PRODUCT_DUE_TO_REVISION_EXCEED"
+	CommissionStatePendingPendingRequesterAcceptProduct    CommissionState = "PENDING_REQUESTER_ACCEPT_PRODUCT"
 	CommissionStateCompleted                               CommissionState = "COMPLETED"
+)
+
+type CommissionDecision string
+
+const (
+	CommissionDecisionRequesterModify          CommissionDecision = "REQUESTER_MODIFY"
+	CommissionDecisionArtistAccept             CommissionDecision = "ARTIST_ACCEPT"
+	CommissionDecisionArtistDecline            CommissionDecision = "ARTIST_DECLINE"
+	CommissionDecisionRequesterReject          CommissionDecision = "REQUESTER_REJECT"
+	CommissionDecisionArtistUploadProofCopy    CommissionDecision = "ARTIST_UPLOAD_PROOF_COPY"
+	CommissionDecisionRequesterAcceptProofCopy CommissionDecision = "REQUESTER_ACCEPT_PROOF_COPY"
+	CommissionDecisionRequesterRequestRevision CommissionDecision = "REQUESTER_REQUEST_REVISION"
+	CommissionDecisionArtistUploadProduct      CommissionDecision = "ARTIST_UPLOAD_PRODUCT"
+	CommissionDecisionRequesterAcceptProduct   CommissionDecision = "REQUESTER_ACCEPT_PRODUCT"
 )
 
 type CommissionValidation string

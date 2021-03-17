@@ -8,8 +8,8 @@ func (e CommissionError) Error() string {
 		return "CommissionErrorNotFound"
 	case CommissionErrorUnAuth:
 		return "CommissionErrorUnAuth"
-	case CommissionErrorStateNotAllowed:
-		return "CommissionErrorStateNotAllowed"
+	case CommissionErrorDecisionNotAllowed:
+		return "CommissionErrorDecisionNotAllowed"
 	case CommissionErrorPriceInvalid:
 		return "CommissionErrorPriceInvalid"
 	case CommissionErrorDayNeedInvalid:
@@ -28,11 +28,12 @@ func (e CommissionError) Error() string {
 const (
 	CommissionErrorNotFound            CommissionError = 10
 	CommissionErrorUnAuth              CommissionError = 11
-	CommissionErrorStateNotAllowed     CommissionError = 12
+	CommissionErrorDecisionNotAllowed  CommissionError = 12
 	CommissionErrorPriceInvalid        CommissionError = 13
 	CommissionErrorDayNeedInvalid      CommissionError = 14
 	CommissionErrorNotAllowBePrivate   CommissionError = 15
 	CommissionErrorNotAllowAnonymous   CommissionError = 16
 	CommissionErrorNotAllowSendMessage CommissionError = 17
+	CommissionErrorRevisionExceed      CommissionError = 17
 	CommissionErrorUnknown             CommissionError = 99
 )

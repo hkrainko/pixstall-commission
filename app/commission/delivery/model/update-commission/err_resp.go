@@ -20,7 +20,7 @@ func NewErrorResponse(err error) (int, interface{}) {
 			return http.StatusUnauthorized, ErrorResponse{
 				Message: commError.Error(),
 			}
-		case model.CommissionErrorStateNotAllowed:
+		case model.CommissionErrorDecisionNotAllowed:
 			return http.StatusMethodNotAllowed, ErrorResponse{
 				Message: commError.Error(),
 			}

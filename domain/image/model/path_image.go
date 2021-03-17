@@ -1,6 +1,8 @@
 package model
 
-import "image"
+import (
+	"image"
+)
 
 type PathImage struct {
 	Path  string

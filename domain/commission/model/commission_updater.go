@@ -2,6 +2,7 @@ package model
 
 import (
 	"image"
+	"mime/multipart"
 	"time"
 )
 
@@ -13,12 +14,18 @@ type CommissionUpdater struct {
 	RequesterProfilePath           *string    `json:"requesterProfilePath"`
 	TimesAllowedDraftToChange      *int       `json:"timesAllowedDraftToChange"`
 	TimesAllowedCompletionToChange *int       `json:"timesAllowedCompletionToChange"`
+	CompletionRevisionRequestTime  *int       `json:"completionRevisionRequestTime"`
 	CompleteTime                   *time.Time `json:"completeTime"`
 	Validation                     *CommissionValidation
 	State                          *CommissionState `json:"state"`
-	CompletionFile                 *[]byte          `json:"completionFile"`
+	Rating                         *int             `json:"rating"`
+	Comment                        *string          `json:"comment"`
+	CompletionFile                 *multipart.File  `json:"completionFile"`
+	CompletionFilePath             *string          `json:"completionFilePath"`
 	DisplayImage                   *image.Image     `json:"displayImage"`
+	DisplayImagePath               *string          `json:"displayImagePath"`
 	ProofCopyImage                 *image.Image     `json:"proofCopyImage"`
+	ProofCopyImagePath             *string          `json:"proofCopyImagePath"`
 
 	// TODO: allow requester to edit before artist approval
 	Price         *Price

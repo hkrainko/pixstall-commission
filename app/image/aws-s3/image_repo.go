@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"image/png"
+	"io"
 	domainImage "pixstall-commission/domain/image"
 	"pixstall-commission/domain/image/model"
 )
@@ -83,4 +84,29 @@ func (a awsS3ImageRepository) SaveImages(ctx context.Context, pathImages []model
 		}
 	}
 	return resultPaths, nil
+}
+
+func (a awsS3ImageRepository) SaveFile(ctx context.Context, pathFile model.PathFile) (*string, error) {
+	buf := bytes.NewBuffer(nil)
+	if _, err := io.Copy(buf, pathFile.File); err != nil {
+		return nil, err
+	}
+	uploadPath := pathFile.Path + pathFile.Name
+
+	// convert buffer to reader
+	reader := bytes.NewReader(buf.Bytes())
+
+	// use it in `PutObjectInput`
+	_, err := a.s3.PutObjectWithContext(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(BucketName),
+		Key:    aws.String(uploadPath),
+		Body:   reader,
+		ContentType: aws.String("image"),
+		ACL: aws.String("public-read"),  //profile should be public accessible
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &uploadPath, nil
 }
