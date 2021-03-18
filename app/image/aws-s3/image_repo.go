@@ -101,7 +101,7 @@ func (a awsS3ImageRepository) SaveFile(ctx context.Context, pathFile model.PathF
 		Bucket: aws.String(BucketName),
 		Key:    aws.String(uploadPath),
 		Body:   reader,
-		ContentType: aws.String("image"),
+		//ContentType: aws.String("image"),
 		ACL: aws.String("public-read"),  //profile should be public accessible
 	})
 

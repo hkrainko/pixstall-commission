@@ -10,20 +10,28 @@ type PlainSystemMessage struct {
 	SystemMessage `json:",inline" bson:",inline"`
 }
 
-type ProofCopySystemMessage struct {
+type UploadProofCopySystemMessage struct {
 	SystemMessage `json:",inline" bson:",inline"`
 	ImagePath     string `json:"imagePath" bson:"imagePath"`
 }
 
-type CompletionSystemMessage struct {
+type UploadProductSystemMessage struct {
+	SystemMessage    `json:",inline" bson:",inline"`
+	FilePath         string `json:"filePath" bson:"filePath"`
+	DisplayImagePath string `json:"displayImagePath" bson:"displayImagePath"`
+}
+
+type AcceptProductSystemMessage struct {
 	SystemMessage `json:",inline" bson:",inline"`
-	FilePath      string  `json:"filePath" bson:"filePath"`
+	Rating        int     `json:"rating,omitempty" bson:"rating,omitempty"`
+	Comment       *string `json:"comment,omitempty" bson:"comment,omitempty"`
 }
 
 type SystemMessageType string
 
 const (
-	SystemMessageTypePlain      SystemMessageType = "Plain"
-	SystemMessageTypeProofCopy  SystemMessageType = "ProofCopy"
-	SystemMessageTypeCompletion SystemMessageType = "Completion"
+	SystemMessageTypePlain           SystemMessageType = "Plain"
+	SystemMessageTypeUploadProofCopy SystemMessageType = "UploadProofCopy"
+	SystemMessageTypeUploadProduct   SystemMessageType = "UploadProduct"
+	SystemMessageTypeAcceptProduct   SystemMessageType = "AcceptProduct"
 )

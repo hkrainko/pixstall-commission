@@ -3,8 +3,10 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"image"
+	"mime/multipart"
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
@@ -83,15 +85,38 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 	if err != nil {
 		return err
 	}
+	if filteredUpdater.ProofCopyImage != nil {
+		path, err := c.storeImage(ctx, "commission", fmt.Sprintf("comm-prf-%v", uuid.NewString()), *filteredUpdater.ProofCopyImage)
+		if err != nil {
+			return model.CommissionErrorUnknown
+		}
+		filteredUpdater.ProofCopyImagePath = path
+	}
+	if filteredUpdater.DisplayImage != nil {
+		path, err := c.storeImage(ctx, "artwork", fmt.Sprintf("artwork-%v", uuid.NewString()), *filteredUpdater.DisplayImage)
+		if err != nil {
+			return model.CommissionErrorUnknown
+		}
+		filteredUpdater.DisplayImagePath = path
+	}
+	if filteredUpdater.CompletionFile != nil {
+		path, err := c.storeFile(ctx, "commission", fmt.Sprintf("comm-prod-%v", uuid.NewString()), *filteredUpdater.CompletionFile)
+		if err != nil {
+			return model.CommissionErrorUnknown
+		}
+		filteredUpdater.CompletionFilePath = path
+	}
 	err = c.commRepo.UpdateCommission(ctx, *filteredUpdater)
 	if err != nil {
 		return err
 	}
-
-	//err = c.msgRepo.AddNewMessage(ctx, nil, msg)
-	//if err != nil {
-	//	_ = c.commMsgDeliRepo.DeliverCommissionMessage(ctx, msg)
-	//}
+	msg, err := NewSystemMessage(decision, *comm, updater)
+	if err == nil {
+		err = c.msgRepo.AddNewMessage(ctx, nil, msg)
+		if err == nil {
+			_ = c.commMsgDeliRepo.DeliverCommissionMessage(ctx, msg)
+		}
+	}
 	//Ignore the error from sending message as we only care the state changed
 	return nil
 }
@@ -196,6 +221,19 @@ func (c commissionUseCase) storeImage(ctx context.Context, path string, name str
 	return savedPath, nil
 }
 
+func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file multipart.File) (*string, error) {
+	pathFile := model2.PathFile{
+		Path:  path + "/",
+		Name:  name,
+		File: file,
+	}
+	savedPath, err := c.imageRepo.SaveFile(ctx, pathFile)
+	if err != nil {
+		return nil, err
+	}
+	return savedPath, nil
+}
+
 func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionOpenCommissionValidation) model.CommissionUpdater {
 	v := model.CommissionValidationOpenCommission
 	if isCommValid := c.isCommValidationCompletable(
@@ -266,37 +304,46 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 		state := model.CommissionStatePendingRequesterModificationValidation
 		//TODO, check price....
 		result.State = &state
+		return &result, nil
 	case model.CommissionDecisionArtistAccept:
 		state := model.CommissionStateInProgress
 		result.State = &state
+		return &result, nil
 	case model.CommissionDecisionArtistDecline:
 		state := model.CommissionStateDeclinedByArtist
 		result.State = &state
-	case model.CommissionDecisionRequesterReject:
-		state := model.CommissionStateRejectedByRequester
+		return &result, nil
+	case model.CommissionDecisionRequesterCancel:
+		state := model.CommissionStateCancelByRequester
 		result.State = &state
+		return &result, nil
 	case model.CommissionDecisionArtistUploadProofCopy:
 		state := model.CommissionStatePendingRequesterAcceptance
 		result.State = &state
 		result.ProofCopyImage = updater.ProofCopyImage
+		return &result, nil
 	case model.CommissionDecisionRequesterAcceptProofCopy:
 		state := model.CommissionStatePendingUploadProduct
 		result.State = &state
+		return &result, nil
 	case model.CommissionDecisionRequesterRequestRevision:
 		state := model.CommissionStatePendingUploadProduct
 		result.State = &state
 		compRevReqTime := comm.CompletionRevisionRequestTime + 1
 		result.CompletionRevisionRequestTime = &compRevReqTime
+		return &result, nil
 	case model.CommissionDecisionArtistUploadProduct:
 		state := model.CommissionStatePendingPendingRequesterAcceptProduct
 		result.State = &state
 		result.DisplayImage = updater.DisplayImage
 		result.CompletionFile = updater.CompletionFile
+		return &result, nil
 	case model.CommissionDecisionRequesterAcceptProduct:
 		state := model.CommissionStateCompleted
 		result.State = &state
 		result.Rating = updater.Rating
 		result.Comment = updater.Comment
+		return &result, nil
 	}
 	return nil, model.CommissionErrorDecisionNotAllowed
 }
@@ -314,7 +361,7 @@ func (c commissionUseCase) isDecisionAllowToMadeByUser(userID string, comm model
 		if userID == comm.ArtistID && comm.State == model.CommissionStatePendingArtistApproval {
 			return nil
 		}
-	case model.CommissionDecisionRequesterReject:
+	case model.CommissionDecisionRequesterCancel:
 		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingArtistApproval {
 			return nil
 		}

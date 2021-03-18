@@ -362,15 +362,15 @@ func (c CommissionMessageBroker) getSystemMessage(body []byte, systemMessageType
 			return nil, err
 		}
 		return &result, nil
-	case model.SystemMessageTypeProofCopy:
-		var result model.ProofCopySystemMessage
+	case model.SystemMessageTypeUploadProofCopy:
+		var result model.UploadProofCopySystemMessage
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			return nil, err
 		}
 		return &result, nil
-	case model.SystemMessageTypeCompletion:
-		var result model.CompletionSystemMessage
+	case model.SystemMessageTypeUploadProduct:
+		var result model.UploadProductSystemMessage
 		err := json.Unmarshal(body, &result)
 		if err != nil {
 			return nil, err

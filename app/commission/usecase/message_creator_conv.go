@@ -51,112 +51,87 @@ func getTextMessage(d model.MessageCreator, artistID string, requesterID string)
 	}
 }
 
-func NewPlainSystemMessage(commId string, text string, artistID string, requesterID string) model.PlainSystemMessage {
-	return model.PlainSystemMessage{
-		SystemMessage: model.SystemMessage{
-			Message: model.Message{
-				ID:              "msg-" + uuid.NewString(),
-				ArtistID:        artistID,
-				RequesterID:     requesterID,
-				CommissionID:    commId,
-				CreateTime:      time.Now(),
-				LastUpdatedTime: time.Now(),
-				State:           model.MessageStateSent,
-				MessageType:     model.MessageTypeSystem,
-			},
-			Text:              text,
-			SystemMessageType: model.SystemMessageTypePlain,
-		},
-	}
-}
+func NewSystemMessage(decision model2.CommissionDecision, comm model2.Commission, updater model2.CommissionUpdater) (model.Messaging, error) {
 
-func NewProofCopySystemMessage(commId string, text string, artistID string, requesterID string, imagePath string) model.ProofCopySystemMessage {
-	return model.ProofCopySystemMessage{
-		SystemMessage: model.SystemMessage{
-			Message: model.Message{
-				ID:              "msg-" + uuid.NewString(),
-				ArtistID:        artistID,
-				RequesterID:     requesterID,
-				CommissionID:    commId,
-				CreateTime:      time.Now(),
-				LastUpdatedTime: time.Now(),
-				State:           model.MessageStateSent,
-				MessageType:     model.MessageTypeSystem,
-			},
-			Text:              text,
-			SystemMessageType: model.SystemMessageTypePlain,
-		},
-		ImagePath: imagePath,
+	msg := model.Message{
+		ID:              "msg-" + uuid.NewString(),
+		ArtistID:        comm.ArtistID,
+		RequesterID:     comm.RequesterID,
+		CommissionID:    comm.ID,
+		CreateTime:      time.Now(),
+		LastUpdatedTime: time.Now(),
+		State:           model.MessageStateSent,
+		MessageType:     model.MessageTypeSystem,
 	}
-}
 
-func NewCompletionSystemMessage(commId string, text string, artistID string, requesterID string, filePath string) model.CompletionSystemMessage {
-	return model.CompletionSystemMessage{
-		SystemMessage: model.SystemMessage{
-			Message: model.Message{
-				ID:              "msg-" + uuid.NewString(),
-				ArtistID:        artistID,
-				RequesterID:     requesterID,
-				CommissionID:    commId,
-				CreateTime:      time.Now(),
-				LastUpdatedTime: time.Now(),
-				State:           model.MessageStateSent,
-				MessageType:     model.MessageTypeSystem,
+	switch decision {
+	case model2.CommissionDecisionRequesterModify,
+		model2.CommissionDecisionArtistAccept,
+		model2.CommissionDecisionArtistDecline,
+		model2.CommissionDecisionRequesterCancel,
+		model2.CommissionDecisionRequesterAcceptProofCopy,
+		model2.CommissionDecisionRequesterRequestRevision:
+		return model.PlainSystemMessage{
+			SystemMessage: model.SystemMessage{
+				Message:           msg,
+				Text:              decisionMessage(decision, comm),
+				SystemMessageType: model.SystemMessageTypePlain,
 			},
-			Text:              text,
-			SystemMessageType: model.SystemMessageTypePlain,
-		},
-		FilePath: filePath,
-	}
-}
-
-func NewPlainSystemMessageForStateChange(comm model2.Commission, toState model2.CommissionState, filePath *string) model.Messaging {
-	switch toState {
-	case model2.CommissionStatePendingValidation:
-		return NewPlainSystemMessage(comm.ID, "系統己收到委托。", comm.ArtistID, comm.RequesterID)
-	case model2.CommissionStateInvalidatedDueToOpenCommission,
-	model2.CommissionStateInvalidatedDueToUsers:
-		return NewPlainSystemMessage(comm.ID, "系統審查失敗。", comm.ArtistID, comm.RequesterID)
-	case model2.CommissionStatePendingArtistApproval:
-		return NewPlainSystemMessage(
-			comm.ID,
-			"系統審查成功。",
-			comm.ArtistID,
-			comm.RequesterID)
-	case model2.CommissionStateInProgress:
-		return NewPlainSystemMessage(
-			comm.ID,
-			fmt.Sprintf("繪師 %v 接受委托。", comm.ArtistID),
-			comm.ArtistID,
-			comm.RequesterID)
-	case model2.CommissionStatePendingRequesterAcceptance:
-		return NewProofCopySystemMessage(
-			comm.ID,
-			fmt.Sprintf("繪師 @%v 上傳完稿。", comm.ArtistID),
-			comm.ArtistID,
-			comm.RequesterID,
-			*filePath)
-	case model2.CommissionStatePendingUploadProduct:
-		return NewPlainSystemMessage(
-			comm.ID,
-			fmt.Sprintf("委托人 %v 確認完稿。", comm.RequesterID),
-			comm.ArtistID,
-			comm.RequesterID)
-	case model2.CommissionStatePendingUploadProductDueToRevisionExceed:
-		return NewPlainSystemMessage(
-			comm.ID,
-			"到達完稿可修改上限。",
-			comm.ArtistID,
-			comm.RequesterID)
-	case model2.CommissionStateCompleted:
-		return NewCompletionSystemMessage(
-			comm.ID,
-			"繪師已上傳完成品並完成委托。",
-			comm.ArtistID,
-			comm.RequesterID,
-			*filePath,
-		)
+		}, nil
+	case model2.CommissionDecisionArtistUploadProofCopy:
+		return model.UploadProofCopySystemMessage{
+			SystemMessage: model.SystemMessage{
+				Message: msg,
+				Text:              decisionMessage(decision, comm),
+				SystemMessageType: model.SystemMessageTypeUploadProofCopy,
+			},
+			ImagePath: *updater.ProofCopyImagePath,
+		}, nil
+	case model2.CommissionDecisionArtistUploadProduct:
+		return model.UploadProductSystemMessage{
+			SystemMessage: model.SystemMessage{
+				Message: msg,
+				Text:              decisionMessage(decision, comm),
+				SystemMessageType: model.SystemMessageTypeUploadProduct,
+			},
+			FilePath: *updater.CompletionFilePath,
+		}, nil
+	case model2.CommissionDecisionRequesterAcceptProduct:
+		return model.AcceptProductSystemMessage{
+			SystemMessage: model.SystemMessage{
+				Message: msg,
+				Text:              decisionMessage(decision, comm),
+				SystemMessageType: model.SystemMessageTypeAcceptProduct,
+			},
+			Rating:  *updater.Rating,
+			Comment: updater.Comment,
+		}, nil
 	default:
-		return nil
+		return nil, model2.CommissionErrorUnknown
+	}
+}
+
+func decisionMessage(decision model2.CommissionDecision, comm model2.Commission) string {
+	switch decision {
+	case model2.CommissionDecisionRequesterModify:
+		return fmt.Sprintf("委托人 %v 嘗試更改委托內容。", comm.RequesterID)
+	case model2.CommissionDecisionArtistAccept:
+		return fmt.Sprintf("繪師 %v 接受委托。", comm.ArtistID)
+	case model2.CommissionDecisionArtistDecline:
+		return fmt.Sprintf("繪師 %v 拒絕委托。", comm.ArtistID)
+	case model2.CommissionDecisionRequesterCancel:
+		return fmt.Sprintf("委托人 %v 取消委托。", comm.RequesterID)
+	case model2.CommissionDecisionArtistUploadProofCopy:
+		return fmt.Sprintf("繪師 %v 上傳委托完稿。", comm.ArtistID)
+	case model2.CommissionDecisionRequesterAcceptProofCopy:
+		return fmt.Sprintf("委托人 %v 接受委托完稿。", comm.RequesterID)
+	case model2.CommissionDecisionRequesterRequestRevision:
+		return fmt.Sprintf("委托人 %v 對完稿提出修訂。", comm.RequesterID)
+	case model2.CommissionDecisionArtistUploadProduct:
+		return fmt.Sprintf("繪師 %v 上傳完成品。", comm.ArtistID)
+	case model2.CommissionDecisionRequesterAcceptProduct:
+		return fmt.Sprintf("委托人 %v 接受完成品。", comm.RequesterID)
+	default:
+		return ""
 	}
 }

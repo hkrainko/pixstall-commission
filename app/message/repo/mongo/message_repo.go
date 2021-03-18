@@ -72,8 +72,8 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, commId
 
 // Private
 func (m mongoMessageRepo) getAddNewMessageFilter(messaging model.Messaging, userId *string) bson.M {
-	switch messaging.(type) {
-	case model.SystemMessage:
+	switch messaging.GetMessageType() {
+	case model.MessageTypeSystem:
 		return bson.M{"id": messaging.GetCommissionID()}
 	default:
 		return bson.M{
