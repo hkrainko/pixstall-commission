@@ -110,7 +110,7 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 	if err != nil {
 		return err
 	}
-	msg, err := NewSystemMessage(decision, *comm, updater)
+	msg, err := NewSystemMessage(decision, *comm, *filteredUpdater)
 	if err == nil {
 		err = c.msgRepo.AddNewMessage(ctx, nil, msg)
 		if err == nil {
@@ -329,7 +329,7 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 	case model.CommissionDecisionRequesterRequestRevision:
 		state := model.CommissionStatePendingUploadProduct
 		result.State = &state
-		compRevReqTime := comm.CompletionRevisionRequestTime + 1
+		compRevReqTime := comm.ProofCopyRevisionRequestTime + 1
 		result.CompletionRevisionRequestTime = &compRevReqTime
 		return &result, nil
 	case model.CommissionDecisionArtistUploadProduct:
@@ -375,7 +375,7 @@ func (c commissionUseCase) isDecisionAllowToMadeByUser(userID string, comm model
 		}
 	case model.CommissionDecisionRequesterRequestRevision:
 		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingRequesterAcceptance {
-			if comm.TimesAllowedCompletionToChange != nil && comm.CompletionRevisionRequestTime >= *comm.TimesAllowedCompletionToChange {
+			if comm.TimesAllowedCompletionToChange != nil && comm.ProofCopyRevisionRequestTime >= *comm.TimesAllowedCompletionToChange {
 				return model.CommissionErrorRevisionExceed
 			}
 			return nil

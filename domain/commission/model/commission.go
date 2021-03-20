@@ -30,9 +30,15 @@ type Commission struct {
 	TimesAllowedDraftToChange      *int     `json:"timesAllowedDraftToChange" bson:"timesAllowedDraftToChange"`
 	TimesAllowedCompletionToChange *int     `json:"timesAllowedCompletionToChange" bson:"timesAllowedCompletionToChange"`
 	DraftChangingRequestTime       int      `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
-	CompletionRevisionRequestTime  int      `json:"completionRevisionRequestTime" bson:"completionRevisionRequestTime"`
+	ProofCopyRevisionRequestTime   int      `json:"proofCopyRevisionRequestTime" bson:"proofCopyRevisionRequestTime"`
 
 	Messages []model.Messaging `json:"messages" bson:"-"`
+
+	ProofCopyImagePaths []string `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
+	DisplayImagePath    *string  `json:"displayImagePath,omitempty" bson:"displayImagePath,omitempty"`
+	CompletionFilePath  *string  `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
+	Rating              *int     `json:"rating,omitempty" bson:"rating,omitempty"`
+	Comment             *string  `json:"comment,omitempty" bson:"comment,omitempty"`
 
 	CreateTime        time.Time              `json:"createTime" bson:"createTime"`
 	CompleteTime      *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
