@@ -16,6 +16,12 @@ type Message struct {
 	From      *string `bson:"from,omitempty"`
 	Text      *string `bson:"text,omitempty"`
 	ImagePath *string `bson:"imagePath,omitempty"`
+
+	SystemMessageType *model.SystemMessageType `bson:"systemMessageType,omitempty"`
+	FilePath          *string                  `bson:"filePath,omitempty"`
+	DisplayImagePath  *string                  `bson:"displayImagePath,omitempty"`
+	Rating            *int                     `bson:"rating,omitempty"`
+	Comment           *string                  `bson:"comment,omitempty"`
 }
 
 func NewFromMessaging(d model.Messaging) *Message {
@@ -39,8 +45,23 @@ func NewFromMessaging(d model.Messaging) *Message {
 		msg.From = &v.From
 		msg.Text = v.Text
 		msg.ImagePath = &v.ImagePath
-	case model.SystemMessage:
+	case model.PlainSystemMessage:
 		msg.Text = &v.Text
+		msg.SystemMessageType = &v.SystemMessageType
+	case model.UploadProofCopySystemMessage:
+		msg.Text = &v.Text
+		msg.SystemMessageType = &v.SystemMessageType
+		msg.ImagePath = &v.ImagePath
+	case model.UploadProductSystemMessage:
+		msg.Text = &v.Text
+		msg.SystemMessageType = &v.SystemMessageType
+		msg.FilePath = &v.FilePath
+		msg.DisplayImagePath = &v.DisplayImagePath
+	case model.AcceptProductSystemMessage:
+		msg.Text = &v.Text
+		msg.SystemMessageType = &v.SystemMessageType
+		msg.Rating = &v.Rating
+		msg.Comment = v.Comment
 	}
 	return &msg
 }
@@ -73,9 +94,46 @@ func (m *Message) ToDomainMessaging(artistID string, requesterID string) model.M
 			ImagePath: *m.ImagePath,
 		}
 	case model.MessageTypeSystem:
-		return &model.SystemMessage{
-			Message: msg,
-			Text:    *m.Text,
+		switch *m.SystemMessageType {
+		case model.SystemMessageTypePlain:
+			return &model.PlainSystemMessage{
+				SystemMessage: model.SystemMessage{
+					Message:           msg,
+					Text:              *m.Text,
+					SystemMessageType: *m.SystemMessageType,
+				},
+			}
+		case model.SystemMessageTypeUploadProofCopy:
+			return &model.UploadProofCopySystemMessage{
+				SystemMessage: model.SystemMessage{
+					Message:           msg,
+					Text:              *m.Text,
+					SystemMessageType: *m.SystemMessageType,
+				},
+				ImagePath: *m.ImagePath,
+			}
+		case model.SystemMessageTypeUploadProduct:
+			return &model.UploadProductSystemMessage{
+				SystemMessage: model.SystemMessage{
+					Message:           msg,
+					Text:              *m.Text,
+					SystemMessageType: *m.SystemMessageType,
+				},
+				FilePath:         *m.FilePath,
+				DisplayImagePath: *m.DisplayImagePath,
+			}
+		case model.SystemMessageTypeAcceptProduct:
+			return &model.AcceptProductSystemMessage{
+				SystemMessage: model.SystemMessage{
+					Message:           msg,
+					Text:              *m.Text,
+					SystemMessageType: *m.SystemMessageType,
+				},
+				Rating:  *m.Rating,
+				Comment: m.Comment,
+			}
+		default:
+			return msg
 		}
 	default:
 		return msg

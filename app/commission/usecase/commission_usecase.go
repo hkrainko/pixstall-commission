@@ -314,7 +314,7 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 		result.State = &state
 		return &result, nil
 	case model.CommissionDecisionRequesterCancel:
-		state := model.CommissionStateCancelByRequester
+		state := model.CommissionStateCancelledByRequester
 		result.State = &state
 		return &result, nil
 	case model.CommissionDecisionArtistUploadProofCopy:
@@ -333,7 +333,7 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 		result.CompletionRevisionRequestTime = &compRevReqTime
 		return &result, nil
 	case model.CommissionDecisionArtistUploadProduct:
-		state := model.CommissionStatePendingPendingRequesterAcceptProduct
+		state := model.CommissionStatePendingRequesterAcceptProduct
 		result.State = &state
 		result.DisplayImage = updater.DisplayImage
 		result.CompletionFile = updater.CompletionFile
@@ -385,7 +385,7 @@ func (c commissionUseCase) isDecisionAllowToMadeByUser(userID string, comm model
 			return nil
 		}
 	case model.CommissionDecisionRequesterAcceptProduct:
-		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingPendingRequesterAcceptProduct && updater.Rating != nil {
+		if userID == comm.RequesterID && comm.State == model.CommissionStatePendingRequesterAcceptProduct && updater.Rating != nil {
 			return nil
 		}
 	default:

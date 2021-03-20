@@ -52,10 +52,10 @@ const (
 	CommissionStateInProgress                              CommissionState = "IN_PROGRESS"
 	CommissionStatePendingRequesterAcceptance              CommissionState = "PENDING_REQUESTER_ACCEPTANCE"
 	CommissionStateDeclinedByArtist                        CommissionState = "DECLINED_BY_ARTIST"
-	CommissionStateCancelByRequester                       CommissionState = "CANCELED_BY_REQUESTER"
+	CommissionStateCancelledByRequester                    CommissionState = "CANCELED_BY_REQUESTER"
 	CommissionStatePendingUploadProduct                    CommissionState = "PENDING_UPLOAD_PRODUCT"
 	CommissionStatePendingUploadProductDueToRevisionExceed CommissionState = "PENDING_UPLOAD_PRODUCT_DUE_TO_REVISION_EXCEED"
-	CommissionStatePendingPendingRequesterAcceptProduct    CommissionState = "PENDING_REQUESTER_ACCEPT_PRODUCT"
+	CommissionStatePendingRequesterAcceptProduct           CommissionState = "PENDING_REQUESTER_ACCEPT_PRODUCT"
 	CommissionStateCompleted                               CommissionState = "COMPLETED"
 )
 
@@ -72,8 +72,6 @@ const (
 	CommissionDecisionArtistUploadProduct      CommissionDecision = "ARTIST_UPLOAD_PRODUCT"
 	CommissionDecisionRequesterAcceptProduct   CommissionDecision = "REQUESTER_ACCEPT_PRODUCT"
 )
-
-
 
 type CommissionValidation string
 
