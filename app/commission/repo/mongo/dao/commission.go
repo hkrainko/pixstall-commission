@@ -78,7 +78,7 @@ func (c Commission) ToDomainCommission() model.Commission {
 		ProofCopyRevisionRequestTime: c.ProofCopyRevisionRequestTime,
 		ProofCopyImagePaths:          c.ProofCopyImagePaths,
 		DisplayImagePath:             c.DisplayImagePath,
-		CompletionFilePath:           c.DisplayImagePath,
+		CompletionFilePath:           c.CompletionFilePath,
 		Rating:                       c.Rating,
 		Comment:                      c.Comment,
 		CreateTime:                   c.CreateTime,

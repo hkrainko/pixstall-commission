@@ -327,7 +327,7 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 		result.State = &state
 		return &result, nil
 	case model.CommissionDecisionRequesterRequestRevision:
-		state := model.CommissionStatePendingUploadProduct
+		state := model.CommissionStateInProgress
 		result.State = &state
 		compRevReqTime := comm.ProofCopyRevisionRequestTime + 1
 		result.CompletionRevisionRequestTime = &compRevReqTime
