@@ -8,5 +8,6 @@ import (
 
 type Repo interface {
 	SendCommissionCreatedMessage(ctx context.Context, commission model.Commission) error
+	SendCommissionCompletedMessage(ctx context.Context, commission model.Commission) error
 	SendCommissionMessageReceivedMessage(ctx context.Context, messaging model2.Messaging) error
 }

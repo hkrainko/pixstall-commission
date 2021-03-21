@@ -110,6 +110,16 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 	if err != nil {
 		return err
 	}
+
+	if *filteredUpdater.State == model.CommissionStateCompleted {
+		comm, err := c.commRepo.GetCommission(ctx, updater.ID)
+		if err == nil {
+			err = c.msgBrokerRepo.SendCommissionCompletedMessage(ctx, *comm)
+			if err != nil {
+				// TODO: send the message later
+			}
+		}
+	}
 	msg, err := NewSystemMessage(decision, *comm, *filteredUpdater)
 	if err == nil {
 		err = c.msgRepo.AddNewMessage(ctx, nil, msg)

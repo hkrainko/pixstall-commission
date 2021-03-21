@@ -52,6 +52,28 @@ func (r rabbitmqMsgBrokerRepo) SendCommissionCreatedMessage(ctx context.Context,
 	return nil
 }
 
+func (r rabbitmqMsgBrokerRepo) SendCommissionCompletedMessage(ctx context.Context, commission model.Commission) error {
+	cComm := model2.NewCompletedCommission(commission)
+	b, err := json.Marshal(cComm)
+	if err != nil {
+		return err
+	}
+	err = r.ch.Publish(
+		"commission",
+		"commission.event.completed",
+		false,
+		false,
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        b,
+		},
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r rabbitmqMsgBrokerRepo) SendCommissionMessageReceivedMessage(ctx context.Context, messaging dMsgModel.Messaging) error {
 	b, err := json.Marshal(messaging)
 	fmt.Printf("sent msg:%v", string(b))

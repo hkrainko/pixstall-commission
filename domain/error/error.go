@@ -6,10 +6,12 @@ type DomainError int
 
 func (e DomainError) Error() string {
 	switch e {
-	case UnknownError:
-		return "UnknownError"
+	case NotFoundError:
+		return "NotFoundError"
 	case UnAuthError:
 		return "UnAuthError"
+	case UnknownError:
+		return "UnknownError"
 	default:
 		return strconv.Itoa(int(e))
 	}

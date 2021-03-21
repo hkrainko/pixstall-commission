@@ -9,9 +9,11 @@ type Response struct {
 	Count       int                `json:"count"`
 }
 
-func NewResponse(requesterId string, dCommissions []model.Commission, Offset int, count int) *Response {
+func NewResponse(requesterId string, dCommissions []model.Commission, offset int, count int) *Response {
 	return &Response{
 		RequesterId: requesterId,
 		Commissions: dCommissions,
+		Offset: offset,
+		Count: count,
 	}
 }
