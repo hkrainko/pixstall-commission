@@ -5,12 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"image"
-	"mime/multipart"
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
 	error2 "pixstall-commission/domain/error"
+	model4 "pixstall-commission/domain/file/model"
 	dImage "pixstall-commission/domain/image"
 	model2 "pixstall-commission/domain/image/model"
 	"pixstall-commission/domain/message"
@@ -92,12 +91,17 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		}
 		filteredUpdater.ProofCopyImagePath = path
 	}
-	if filteredUpdater.DisplayImage != nil {
-		path, err := c.storeImage(ctx, "artwork", fmt.Sprintf("artwork-%v", uuid.NewString()), *filteredUpdater.DisplayImage)
+	if filteredUpdater.DisplayImageFile != nil {
+		path, err := c.storeImage(ctx, "artwork", fmt.Sprintf("artwork-%v", uuid.NewString()), *filteredUpdater.DisplayImageFile)
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
-		filteredUpdater.DisplayImagePath = path
+		filteredUpdater.DisplayImage = &model.DisplayImage{
+			Path:   *path,
+			Volume: filteredUpdater.DisplayImageFile.Volume,
+			Size:   filteredUpdater.DisplayImageFile.Size,
+			Type:   filteredUpdater.DisplayImageFile.Type,
+		}
 	}
 	if filteredUpdater.CompletionFile != nil {
 		path, err := c.storeFile(ctx, "commission", fmt.Sprintf("comm-prod-%v", uuid.NewString()), *filteredUpdater.CompletionFile)
@@ -111,15 +115,15 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		return err
 	}
 
-	if *filteredUpdater.State == model.CommissionStateCompleted {
-		comm, err := c.commRepo.GetCommission(ctx, updater.ID)
-		if err == nil {
-			err = c.msgBrokerRepo.SendCommissionCompletedMessage(ctx, *comm)
-			if err != nil {
-				// TODO: send the message later
-			}
-		}
-	}
+	//if *filteredUpdater.State == model.CommissionStateCompleted {
+	//	comm, err := c.commRepo.GetCommission(ctx, updater.ID)
+	//	if err == nil {
+	//		err = c.msgBrokerRepo.SendCommissionCompletedMessage(ctx, *comm)
+	//		if err != nil {
+	//			// TODO: send the message later
+	//		}
+	//	}
+	//}
 	msg, err := NewSystemMessage(decision, *comm, *filteredUpdater)
 	if err == nil {
 		err = c.msgRepo.AddNewMessage(ctx, nil, msg)
@@ -200,7 +204,7 @@ func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, 
 }
 
 // Private
-func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []image.Image) (*[]string, error) {
+func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []model4.ImageFile) (*[]string, error) {
 	if len(images) > 0 {
 		pathImages := make([]model2.PathImage, 0, len(images))
 		for _, refImage := range images {
@@ -218,7 +222,7 @@ func (c commissionUseCase) storeImages(ctx context.Context, path string, name st
 	return nil, errors.New("storeRefImage failed")
 }
 
-func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image image.Image) (*string, error) {
+func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image model4.ImageFile) (*string, error) {
 	pathImage := model2.PathImage{
 		Path:  path + "/",
 		Name:  name,
@@ -231,10 +235,10 @@ func (c commissionUseCase) storeImage(ctx context.Context, path string, name str
 	return savedPath, nil
 }
 
-func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file multipart.File) (*string, error) {
+func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file model4.File) (*string, error) {
 	pathFile := model2.PathFile{
-		Path:  path + "/",
-		Name:  name,
+		Path: path + "/",
+		Name: name,
 		File: file,
 	}
 	savedPath, err := c.imageRepo.SaveFile(ctx, pathFile)

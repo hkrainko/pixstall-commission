@@ -1,6 +1,7 @@
 package model
 
 import (
+	model2 "pixstall-commission/domain/file/model"
 	"pixstall-commission/domain/message/model"
 	"time"
 )
@@ -18,7 +19,7 @@ type Commission struct {
 
 	Price                          Price    `json:"price" bson:"price"`
 	DayNeed                        int      `json:"dayNeed" bson:"dayNeed"`
-	Size                           *Size    `json:"size" bson:"size,omitempty"`
+	Size                           *model2.Size    `json:"size" bson:"size,omitempty"`
 	Resolution                     *float64 `json:"resolution" bson:"resolution,omitempty"`
 	ExportFormat                   *string  `json:"exportFormat" bson:"exportFormat,omitempty"`
 	Desc                           string   `json:"desc" bson:"desc"`
@@ -35,16 +36,26 @@ type Commission struct {
 	Messages []model.Messaging `json:"messages" bson:"-"`
 
 	ProofCopyImagePaths []string `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
-	DisplayImagePath    *string  `json:"displayImagePath,omitempty" bson:"displayImagePath,omitempty"`
-	CompletionFilePath  *string  `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
-	Rating              *int     `json:"rating,omitempty" bson:"rating,omitempty"`
-	Comment             *string  `json:"comment,omitempty" bson:"comment,omitempty"`
+
+	StartTime    *time.Time    `json:"startTime,omitempty" bson:"startTime,omitempty"`
+	CompleteTime *time.Time    `json:"completeTime,omitempty" bson:"completeTime,omitempty"`
+	DisplayImage *DisplayImage `json:"displayImage,omitempty" bson:"displayImage,omitempty"`
+
+	CompletionFilePath *string `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
+	Rating             *int    `json:"rating,omitempty" bson:"rating,omitempty"`
+	Comment            *string `json:"comment,omitempty" bson:"comment,omitempty"`
 
 	CreateTime        time.Time              `json:"createTime" bson:"createTime"`
-	CompleteTime      *time.Time             `json:"completeTime" bson:"completeTime,omitempty"`
 	LastUpdateTime    time.Time              `json:"lastUpdateTime" bson:"lastUpdateTime"`
 	ValidationHistory []CommissionValidation `bson:"validationHistory"`
 	State             CommissionState        `json:"state" bson:"state"`
+}
+
+type DisplayImage struct {
+	Path   string `json:"path" bson:"path"`
+	Volume int64  `json:"volume" bson:"volume"`
+	Size   model2.Size   `json:"size" bson:"size"`
+	Type   string `json:"type" bson:"type"`
 }
 
 type CommissionState string

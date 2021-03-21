@@ -1,8 +1,7 @@
 package model
 
 import (
-	"image"
-	"mime/multipart"
+	"pixstall-commission/domain/file/model"
 	"time"
 )
 
@@ -20,17 +19,17 @@ type CommissionUpdater struct {
 	State                          *CommissionState `json:"state"`
 	Rating                         *int             `json:"rating"`
 	Comment                        *string          `json:"comment"`
-	CompletionFile                 *multipart.File  `json:"completionFile"`
+	CompletionFile                 *model.File      `json:"completionFile"`
 	CompletionFilePath             *string          `json:"completionFilePath"`
-	DisplayImage                   *image.Image     `json:"displayImage"`
-	DisplayImagePath               *string          `json:"displayImagePath"`
-	ProofCopyImage                 *image.Image     `json:"proofCopyImage"`
+	DisplayImageFile               *model.ImageFile `json:"displayImageFile"`
+	DisplayImage                   *DisplayImage    `json:"displayImage"`
+	ProofCopyImage                 *model.ImageFile `json:"proofCopyImage"`
 	ProofCopyImagePath             *string          `json:"proofCopyImagePath"`
 
 	// TODO: allow requester to edit before artist approval
 	Price         *Price
 	DayNeed       *int
-	Size          *Size
+	Size          *model.Size
 	Resolution    *float64
 	ExportFormat  *string
 	Desc          *string

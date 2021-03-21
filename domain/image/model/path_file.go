@@ -1,9 +1,11 @@
 package model
 
-import "mime/multipart"
+import (
+	"pixstall-commission/domain/file/model"
+)
 
 type PathFile struct {
 	Path string
 	Name string
-	File multipart.File
+	File model.File
 }

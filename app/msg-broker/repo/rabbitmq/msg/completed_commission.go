@@ -2,6 +2,7 @@ package msg
 
 import (
 	"pixstall-commission/domain/commission/model"
+	model2 "pixstall-commission/domain/file/model"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type CompletedCommission struct {
 
 	Price                          model.Price `json:"price" bson:"price"`
 	DayNeed                        int         `json:"dayNeed" bson:"dayNeed"`
-	Size                           *model.Size `json:"size" bson:"size,omitempty"`
+	Size                           *model2.Size `json:"size" bson:"size,omitempty"`
 	Resolution                     *float64    `json:"resolution" bson:"resolution,omitempty"`
 	ExportFormat                   *string     `json:"exportFormat" bson:"exportFormat,omitempty"`
 	Desc                           string      `json:"desc" bson:"desc"`
@@ -32,11 +33,11 @@ type CompletedCommission struct {
 	DraftChangingRequestTime       int         `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
 	ProofCopyRevisionRequestTime   int         `json:"proofCopyRevisionRequestTime" bson:"proofCopyRevisionRequestTime"`
 
-	ProofCopyImagePaths []string `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
-	DisplayImagePath    *string  `json:"displayImagePath,omitempty" bson:"displayImagePath,omitempty"`
-	CompletionFilePath  *string  `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
-	Rating              *int     `json:"rating,omitempty" bson:"rating,omitempty"`
-	Comment             *string  `json:"comment,omitempty" bson:"comment,omitempty"`
+	ProofCopyImagePaths []string           `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
+	DisplayImage        model.DisplayImage `json:"displayImage" bson:"displayImage"`
+	CompletionFilePath  *string            `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
+	Rating              *int               `json:"rating,omitempty" bson:"rating,omitempty"`
+	Comment             *string            `json:"comment,omitempty" bson:"comment,omitempty"`
 
 	CreateTime     time.Time             `json:"createTime" bson:"createTime"`
 	CompleteTime   *time.Time            `json:"completeTime" bson:"completeTime,omitempty"`
@@ -71,7 +72,7 @@ func NewCompletedCommission(comm model.Commission) CompletedCommission {
 		DraftChangingRequestTime:       comm.DraftChangingRequestTime,
 		ProofCopyRevisionRequestTime:   comm.ProofCopyRevisionRequestTime,
 		ProofCopyImagePaths:            comm.ProofCopyImagePaths,
-		DisplayImagePath:               comm.DisplayImagePath,
+		DisplayImage:                   *comm.DisplayImage,
 		CompletionFilePath:             comm.CompletionFilePath,
 		Rating:                         comm.Rating,
 		Comment:                        comm.Comment,

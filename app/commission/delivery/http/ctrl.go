@@ -17,6 +17,7 @@ import (
 	update_commission "pixstall-commission/app/commission/delivery/model/update-commission"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
+	model3 "pixstall-commission/domain/file/model"
 	model2 "pixstall-commission/domain/message/model"
 	"strconv"
 	"time"
@@ -124,23 +125,11 @@ func (c CommissionController) CreateMessage(ctx *gin.Context) {
 	msgCreator := model2.MessageCreator{CommissionID: commId, Form: tokenUserID}
 	text := ctx.PostForm("text")
 	msgCreator.Text = text
-	fileHeader, err := ctx.FormFile("image")
+
+	imageFiles, err := getMultipartFormImages(ctx, "image")
 	if err == nil {
-		decodedImg := func() image.Image {
-			if err != nil {
-				return nil
-			}
-			f, err := fileHeader.Open()
-			if err != nil {
-				return nil
-			}
-			img, _, err := image.Decode(f)
-			if err != nil {
-				return nil
-			}
-			return img
-		}()
-		msgCreator.Image = &decodedImg
+		imgFiles := *imageFiles
+		msgCreator.Image = &imgFiles[0]
 	}
 	if msgCreator.Text == "" && msgCreator.Image == nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
@@ -314,7 +303,7 @@ func (c CommissionController) UpdateCommission(ctx *gin.Context) {
 	displayImages, err := getMultipartFormImages(ctx, "displayImage")
 	if err == nil {
 		images := *displayImages
-		updater.DisplayImage = &images[0]
+		updater.DisplayImageFile = &images[0]
 	}
 	proofCopyImages, err := getMultipartFormImages(ctx, "proofCopyImage")
 	if err == nil {
@@ -386,7 +375,7 @@ func getDayNeed(ctx *gin.Context) (*int, error) {
 	return &dn, nil
 }
 
-func getSize(ctx *gin.Context) (*model.Size, error) {
+func getSize(ctx *gin.Context) (*model3.Size, error) {
 	sizeWidth, exist := ctx.GetPostForm("size.width")
 	if !exist {
 		return nil, errors.New("")
@@ -407,7 +396,7 @@ func getSize(ctx *gin.Context) (*model.Size, error) {
 	if !exist {
 		return nil, errors.New("")
 	}
-	return &model.Size{
+	return &model3.Size{
 		Width:  width,
 		Height: height,
 		Unit:   sizeUnit,
@@ -426,59 +415,89 @@ func getResolution(ctx *gin.Context) (*float64, error) {
 	return &result, nil
 }
 
-func getMultipartFormImages(ctx *gin.Context, key string) (*[]image.Image, error) {
+func getMultipartFormImages(ctx *gin.Context, key string) (*[]model3.ImageFile, error) {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
 	fileHeaders := form.File[key]
-	images := make([]image.Image, 0)
+	imageFiles := make([]model3.ImageFile, 0)
 	for _, header := range fileHeaders {
-		decodedImage := func() image.Image {
-			if err != nil {
-				return nil
-			}
-			f, err := header.Open()
-			if err != nil {
-				return nil
-			}
-			decodedImage, _, err := image.Decode(f)
-			if err != nil {
-				return nil
-			}
-			return decodedImage
-		}()
-		if decodedImage != nil {
-			images = append(images, decodedImage)
+		f, err := header.Open()
+		if err != nil {
+			continue
 		}
+		contentType, err := getFileContentType(f)
+		if err != nil {
+			_ = f.Close()
+			continue
+		}
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			_ = f.Close()
+			continue
+		}
+		img, _, err := image.Decode(f)
+		if err != nil {
+			_ = f.Close()
+			continue
+		}
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			_ = f.Close()
+			continue
+		}
+		imgF := model3.ImageFile{
+			File: model3.File{
+				File:   f,
+				Name:   header.Filename,
+				Type:   contentType,
+				Volume: header.Size,
+			},
+			Size: model3.Size{
+				Width:  float64(img.Bounds().Dx()),
+				Height: float64(img.Bounds().Dy()),
+				Unit:   "px",
+			},
+		}
+		imageFiles = append(imageFiles, imgF)
+		_ = f.Close()
 	}
-	if len(images) <= 0 {
+	if len(imageFiles) <= 0 {
 		return nil, errors.New("")
 	}
-	return &images, nil
+	return &imageFiles, nil
 }
 
-func getMultipartFormFiles(ctx *gin.Context, key string) (*[]multipart.File, error) {
+func getMultipartFormFiles(ctx *gin.Context, key string) (*[]model3.File, error) {
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
 	fileHeaders := form.File[key]
-	files := make([]multipart.File, 0)
+	files := make([]model3.File, 0)
 	for _, header := range fileHeaders {
-		decodedFile := func() multipart.File {
-			if err != nil {
-				return nil
-			}
-			f, err := header.Open()
-			if err != nil {
-				return nil
-			}
-			return f
-		}()
-		if decodedFile != nil {
-			files = append(files, decodedFile)
+		f, err := header.Open()
+		if err != nil {
+			continue
 		}
+		contentType, err := getFileContentType(f)
+		if err != nil {
+			_ = f.Close()
+			continue
+		}
+		_, err = f.Seek(0, 0)
+		if err != nil {
+			continue
+		}
+		dFile := model3.File{
+			File:   f,
+			Name:   header.Filename,
+			Type:   contentType,
+			Volume: header.Size,
+		}
+		files = append(files, dFile)
+		_ = f.Close()
 	}
 	if len(files) <= 0 {
 		return nil, errors.New("")
@@ -577,4 +596,21 @@ func getSorter(ctx *gin.Context) (*model.CommissionSorter, error) {
 	} else {
 		return &sorter, nil
 	}
+}
+
+func getFileContentType(out multipart.File) (string, error) {
+
+	// Only the first 512 bytes are used to sniff the content type.
+	buffer := make([]byte, 512)
+
+	_, err := out.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	// Use the net/http package's handy DectectContentType function. Always returns a valid
+	// content-type by returning "application/octet-stream" if no others seemed to match.
+	contentType := http.DetectContentType(buffer)
+
+	return contentType, nil
 }

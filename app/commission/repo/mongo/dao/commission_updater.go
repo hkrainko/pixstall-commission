@@ -30,8 +30,8 @@ func NewUpdaterFromCommissionUpdater(d model.CommissionUpdater) bson.D {
 	if d.State != nil {
 		setter = append(setter, bson.E{Key: "state", Value: d.State})
 	}
-	if d.DisplayImagePath != nil {
-		setter = append(setter, bson.E{Key: "displayImagePath", Value: d.DisplayImagePath})
+	if d.DisplayImage != nil {
+		setter = append(setter, bson.E{Key: "displayImage", Value: d.DisplayImage})
 	}
 	if d.CompletionFilePath != nil {
 		setter = append(setter, bson.E{Key: "completionFilePath", Value: d.CompletionFilePath})

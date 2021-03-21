@@ -1,11 +1,11 @@
 package model
 
 import (
-	"image"
+	"pixstall-commission/domain/file/model"
 )
 
 type PathImage struct {
 	Path  string
 	Name  string
-	Image image.Image
+	Image model.ImageFile
 }
