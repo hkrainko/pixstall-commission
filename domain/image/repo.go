@@ -7,5 +7,5 @@ import (
 
 type Repo interface {
 	SaveFile(ctx context.Context, file model2.File, fileType model2.FileType, ownerID string, acl []string) (*string, error)
-	SaveFiles(ctx context.Context, files []model2.File, fileType model2.FileType, ownerID string, acl []string) ([]string, error)
+	//SaveFiles(ctx context.Context, files []model2.File, fileType model2.FileType, ownerID string, acl []string) ([]string, error)
 }

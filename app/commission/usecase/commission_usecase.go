@@ -47,10 +47,15 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 		return result
 	}(creator.RefImages)
 
-	storedPaths, err := c.imageRepo.SaveFiles(ctx, files, model2.FileTypeCommissionRef, creator.RequesterID, []string{creator.ArtistID})
-	if err == nil {
-		creator.RefImagePaths = storedPaths
+	var storedPaths []string
+	for _, f := range files {
+		path, err := c.imageRepo.SaveFile(ctx, f, model2.FileTypeCommissionRef, creator.RequesterID, []string{creator.ArtistID})
+		if err != nil {
+			return nil, err
+		}
+		storedPaths = append(storedPaths, *path)
 	}
+	creator.RefImagePaths = storedPaths
 	newComm, err := c.commRepo.AddCommission(ctx, creator)
 	if err != nil {
 		return nil, err
