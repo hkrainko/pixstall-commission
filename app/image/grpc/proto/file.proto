@@ -8,9 +8,8 @@ service FileService {
 }
 
 message MetaData {
-  FileType fileType = 2;
   string name = 1;
-  string ext = 3;
+  FileType fileType = 2;
 
   enum FileType {
     Message = 0;

@@ -231,7 +231,7 @@ func (c CommissionController) AddCommission(ctx *gin.Context) {
 	if err == nil {
 		creator.RefImages = *refImages
 	}
-	
+
 	comm, err := c.commUseCase.AddCommission(ctx, creator)
 	if err != nil {
 		ctx.JSON(add_commission.NewErrorResponse(err))
@@ -548,12 +548,12 @@ func getFilter(ctx *gin.Context) (*model.CommissionFilter, error) {
 	}
 	layout := "2014-09-12T11:45:26.371Z"
 	if createTimeFrom, exist := ctx.GetQuery("createTimeFrom"); exist {
-		if t, err := time.Parse(layout , createTimeFrom); err == nil {
+		if t, err := time.Parse(layout, createTimeFrom); err == nil {
 			filter.CreateTimeFrom = &t
 		}
 	}
 	if createTimeTo, exist := ctx.GetQuery("createTimeTo"); exist {
-		if t, err := time.Parse(layout , createTimeTo); err == nil {
+		if t, err := time.Parse(layout, createTimeTo); err == nil {
 			filter.CreateTimeTo = &t
 		}
 	}

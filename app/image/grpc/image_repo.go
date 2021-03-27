@@ -36,7 +36,6 @@ func (g grpcImageRepository) SaveFile(ctx context.Context, file model2.File, fil
 			MetaData: &proto.MetaData{
 				FileType: gFileType,
 				Name:     file.Name,
-				Ext:      file.Ext,
 			},
 		},
 	}

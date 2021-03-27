@@ -8,8 +8,6 @@ type File struct {
 	File        multipart.File
 	Name        string
 	ContentType string
-	FileType    FileType
-	Ext         string
 	Volume      int64
 }
 
