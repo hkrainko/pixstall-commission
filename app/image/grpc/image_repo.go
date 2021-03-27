@@ -20,7 +20,7 @@ func NewGRPCImageRepository(grpcConn *grpc.ClientConn) image.Repo {
 	}
 }
 
-func (g grpcImageRepository) SaveFile(ctx context.Context, file model2.File, fileType model2.FileType) (*string, error) {
+func (g grpcImageRepository) SaveFile(ctx context.Context, file model2.File, fileType model2.FileType, ownerID string, acl []string) (*string, error) {
 	client := proto.NewFileServiceClient(g.grpcConn)
 
 	stream, err := client.SaveFile(ctx)
@@ -36,6 +36,8 @@ func (g grpcImageRepository) SaveFile(ctx context.Context, file model2.File, fil
 			MetaData: &proto.MetaData{
 				FileType: gFileType,
 				Name:     file.Name,
+				Owner: ownerID,
+				Acl: acl,
 			},
 		},
 	}
@@ -64,7 +66,7 @@ func (g grpcImageRepository) SaveFile(ctx context.Context, file model2.File, fil
 	return &resp.Path, nil
 }
 
-func (g grpcImageRepository) SaveFiles(ctx context.Context, files []model2.File, fileType model2.FileType) ([]string, error) {
+func (g grpcImageRepository) SaveFiles(ctx context.Context, files []model2.File, fileType model2.FileType, ownerID string, acl []string) ([]string, error) {
 	panic("implement me")
 }
 
@@ -78,16 +80,12 @@ func (g grpcImageRepository) gRPCFileTypeFormDomain(dFileType model2.FileType) (
 		return proto.MetaData_CommissionRef, nil
 	case model2.FileTypeCommissionProofCopy:
 		return proto.MetaData_CommissionProofCopy, nil
-	case model2.FileTypeArtworkHidden:
-		return proto.MetaData_ArtworkHidden, nil
 	case model2.FileTypeArtwork:
 		return proto.MetaData_Artwork, nil
 	case model2.FileTypeRoof:
 		return proto.MetaData_Roof, nil
 	case model2.FileTypeOpenCommission:
 		return proto.MetaData_OpenCommission, nil
-	case model2.FileTypeOpenCommissionHidden:
-		return proto.MetaData_OpenCommissionHidden, nil
 	case model2.FileTypeProfile:
 		return proto.MetaData_Profile, nil
 	default:

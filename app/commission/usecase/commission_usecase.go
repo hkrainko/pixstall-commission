@@ -47,7 +47,7 @@ func (c commissionUseCase) AddCommission(ctx context.Context, creator model.Comm
 		return result
 	}(creator.RefImages)
 
-	storedPaths, err := c.imageRepo.SaveFiles(ctx, files, model2.FileTypeCommissionRef)
+	storedPaths, err := c.imageRepo.SaveFiles(ctx, files, model2.FileTypeCommissionRef, creator.RequesterID, []string{creator.ArtistID})
 	if err == nil {
 		creator.RefImagePaths = storedPaths
 	}
@@ -89,14 +89,20 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		return err
 	}
 	if filteredUpdater.ProofCopyImage != nil {
-		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.ProofCopyImage.File, model2.FileTypeCommissionProofCopy)
+		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.ProofCopyImage.File, model2.FileTypeCommissionProofCopy, comm.ArtistID, []string{comm.RequesterID})
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
 		filteredUpdater.ProofCopyImagePath = path
 	}
 	if filteredUpdater.DisplayImageFile != nil {
-		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.DisplayImageFile.File, model2.FileTypeArtwork)
+		var acl []string
+		if comm.BePrivate {
+			acl = append(acl, comm.RequesterID)
+		} else {
+			acl = append(acl, "*")
+		}
+		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.DisplayImageFile.File, model2.FileTypeArtwork, comm.ArtistID, acl)
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
@@ -108,7 +114,7 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		}
 	}
 	if filteredUpdater.CompletionFile != nil {
-		path, err := c.imageRepo.SaveFile(ctx, *filteredUpdater.CompletionFile, model2.FileTypeCompletion)
+		path, err := c.imageRepo.SaveFile(ctx, *filteredUpdater.CompletionFile, model2.FileTypeCompletion, comm.ArtistID, []string{comm.RequesterID})
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
@@ -188,7 +194,13 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 		return model.CommissionErrorNotAllowSendMessage
 	}
 	if msgCreator.Image != nil {
-		path, err := c.imageRepo.SaveFile(ctx, msgCreator.Image.File, model2.FileTypeMessage)
+		var acl []string
+		if msgCreator.Form == comm.ArtistID {
+			acl = append(acl, comm.RequesterID)
+		} else {
+			acl = append(acl, comm.ArtistID)
+		}
+		path, err := c.imageRepo.SaveFile(ctx, msgCreator.Image.File, model2.FileTypeMessage, msgCreator.Form, acl)
 		if err == nil {
 			msgCreator.ImagePath = path
 		}
@@ -206,51 +218,6 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, message model3.Messaging) error {
 	return c.commMsgDeliRepo.DeliverCommissionMessage(ctx, message)
 }
-
-// Private
-//func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []model4.ImageFile) (*[]string, error) {
-//	if len(images) > 0 {
-//		pathImages := make([]model4.ImageFile, 0, len(images))
-//		for _, refImage := range images {
-//			pathImages = append(pathImages, model2.PathImage{
-//				Path:  path + "/",
-//				Name:  name,
-//				Image: refImage,
-//			})
-//		}
-//		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
-//		if err == nil {
-//			return &paths, nil
-//		}
-//	}
-//	return nil, errors.New("storeRefImage failed")
-//}
-
-//func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image model4.ImageFile) (*string, error) {
-//	pathImage := model2.PathImage{
-//		Path:  path + "/",
-//		Name:  name,
-//		Image: image,
-//	}
-//	savedPath, err := c.imageRepo.SaveImage(ctx, pathImage)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return savedPath, nil
-//}
-
-//func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file model4.File) (*string, error) {
-//	pathFile := model2.PathFile{
-//		Path: path + "/",
-//		Name: name,
-//		File: file,
-//	}
-//	savedPath, err := c.imageRepo.SaveFile(ctx, pathFile)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return savedPath, nil
-//}
 
 func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionOpenCommissionValidation) model.CommissionUpdater {
 	v := model.CommissionValidationOpenCommission

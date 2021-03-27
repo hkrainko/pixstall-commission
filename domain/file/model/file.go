@@ -29,10 +29,8 @@ const (
 	FileTypeCompletion           = "completion"
 	FileTypeCommissionRef        = "commission-ref"
 	FileTypeCommissionProofCopy  = "commission-proof-copy"
-	FileTypeArtworkHidden        = "artwork-hidden"
 	FileTypeArtwork              = "artwork"
 	FileTypeRoof                 = "roof"
 	FileTypeOpenCommission       = "open-commission"
-	FileTypeOpenCommissionHidden = "open-commission-hidden"
 	FileTypeProfile              = "profile"
 )
