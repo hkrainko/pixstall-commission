@@ -17,21 +17,21 @@ type CompletedCommission struct {
 	RequesterName        string  `json:"requesterName" bson:"requesterName"`
 	RequesterProfilePath *string `json:"requesterProfilePath" bson:"requesterProfilePath,omitempty"`
 
-	Price                          model.Price `json:"price" bson:"price"`
-	DayNeed                        int         `json:"dayNeed" bson:"dayNeed"`
+	Price                          model.Price  `json:"price" bson:"price"`
+	DayNeed                        int          `json:"dayNeed" bson:"dayNeed"`
 	Size                           *model2.Size `json:"size" bson:"size,omitempty"`
-	Resolution                     *float64    `json:"resolution" bson:"resolution,omitempty"`
-	ExportFormat                   *string     `json:"exportFormat" bson:"exportFormat,omitempty"`
-	Desc                           string      `json:"desc" bson:"desc"`
-	PaymentMethod                  string      `json:"paymentMethod" bson:"paymentMethod"`
-	IsR18                          bool        `json:"isR18" bson:"isR18"`
-	BePrivate                      bool        `json:"bePrivate" bson:"bePrivate"`
-	Anonymous                      bool        `json:"anonymous" bson:"anonymous"`
-	RefImagePaths                  []string    `json:"refImagePaths" bson:"refImagePaths"`
-	TimesAllowedDraftToChange      *int        `json:"timesAllowedDraftToChange" bson:"timesAllowedDraftToChange"`
-	TimesAllowedCompletionToChange *int        `json:"timesAllowedCompletionToChange" bson:"timesAllowedCompletionToChange"`
-	DraftChangingRequestTime       int         `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
-	ProofCopyRevisionRequestTime   int         `json:"proofCopyRevisionRequestTime" bson:"proofCopyRevisionRequestTime"`
+	Resolution                     *float64     `json:"resolution" bson:"resolution,omitempty"`
+	ExportFormat                   *string      `json:"exportFormat" bson:"exportFormat,omitempty"`
+	Desc                           string       `json:"desc" bson:"desc"`
+	PaymentMethod                  string       `json:"paymentMethod" bson:"paymentMethod"`
+	IsR18                          bool         `json:"isR18" bson:"isR18"`
+	BePrivate                      bool         `json:"bePrivate" bson:"bePrivate"`
+	Anonymous                      bool         `json:"anonymous" bson:"anonymous"`
+	RefImagePaths                  []string     `json:"refImagePaths" bson:"refImagePaths"`
+	TimesAllowedDraftToChange      *int         `json:"timesAllowedDraftToChange" bson:"timesAllowedDraftToChange"`
+	TimesAllowedCompletionToChange *int         `json:"timesAllowedCompletionToChange" bson:"timesAllowedCompletionToChange"`
+	DraftChangingRequestTime       int          `json:"draftChangingRequestTime" bson:"draftChangingRequestTime"`
+	ProofCopyRevisionRequestTime   int          `json:"proofCopyRevisionRequestTime" bson:"proofCopyRevisionRequestTime"`
 
 	ProofCopyImagePaths []string           `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
 	DisplayImage        model.DisplayImage `json:"displayImage" bson:"displayImage"`

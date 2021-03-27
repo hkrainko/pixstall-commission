@@ -449,10 +449,10 @@ func getMultipartFormImages(ctx *gin.Context, key string) (*[]model3.ImageFile, 
 		}
 		imgF := model3.ImageFile{
 			File: model3.File{
-				File:   f,
-				Name:   header.Filename,
-				Type:   contentType,
-				Volume: header.Size,
+				File:        f,
+				Name:        header.Filename,
+				ContentType: contentType,
+				Volume:      header.Size,
 			},
 			Size: model3.Size{
 				Width:  float64(img.Bounds().Dx()),
@@ -491,10 +491,10 @@ func getMultipartFormFiles(ctx *gin.Context, key string) (*[]model3.File, error)
 			continue
 		}
 		dFile := model3.File{
-			File:   f,
-			Name:   header.Filename,
-			Type:   contentType,
-			Volume: header.Size,
+			File:        f,
+			Name:        header.Filename,
+			ContentType: contentType,
+			Volume:      header.Size,
 		}
 		files = append(files, dFile)
 		_ = f.Close()

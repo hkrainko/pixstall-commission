@@ -2,16 +2,12 @@ package usecase
 
 import (
 	"context"
-	"errors"
-	"fmt"
-	"github.com/google/uuid"
 	commMsgDelivery "pixstall-commission/domain/comm-msg-delivery"
 	"pixstall-commission/domain/commission"
 	"pixstall-commission/domain/commission/model"
 	error2 "pixstall-commission/domain/error"
-	model4 "pixstall-commission/domain/file/model"
+	model2 "pixstall-commission/domain/file/model"
 	dImage "pixstall-commission/domain/image"
-	model2 "pixstall-commission/domain/image/model"
 	"pixstall-commission/domain/message"
 	model3 "pixstall-commission/domain/message/model"
 	msgBroker "pixstall-commission/domain/msg-broker"
@@ -43,9 +39,17 @@ func NewCommissionUseCase(
 
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error) {
 	// Upload
-	storedPaths, err := c.storeImages(ctx, "commissions", "rf-"+creator.RequesterID+"-"+uuid.NewString(), creator.RefImages)
+	files := func(f []model2.ImageFile) []model2.File {
+		result := make([]model2.File, len(f))
+		for _, v := range f {
+			result = append(result, v.File)
+		}
+		return result
+	}(creator.RefImages)
+
+	storedPaths, err := c.imageRepo.SaveFiles(ctx, files, model2.FileTypeCommissionRef)
 	if err == nil {
-		creator.RefImagePaths = *storedPaths
+		creator.RefImagePaths = storedPaths
 	}
 	newComm, err := c.commRepo.AddCommission(ctx, creator)
 	if err != nil {
@@ -85,26 +89,26 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		return err
 	}
 	if filteredUpdater.ProofCopyImage != nil {
-		path, err := c.storeImage(ctx, "commission", fmt.Sprintf("comm-prf-%v", uuid.NewString()), *filteredUpdater.ProofCopyImage)
+		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.ProofCopyImage.File, model2.FileTypeCommissionProofCopy)
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
 		filteredUpdater.ProofCopyImagePath = path
 	}
 	if filteredUpdater.DisplayImageFile != nil {
-		path, err := c.storeImage(ctx, "artwork", fmt.Sprintf("artwork-%v", uuid.NewString()), *filteredUpdater.DisplayImageFile)
+		path, err := c.imageRepo.SaveFile(ctx, filteredUpdater.DisplayImageFile.File, model2.FileTypeArtwork)
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
 		filteredUpdater.DisplayImage = &model.DisplayImage{
-			Path:   *path,
-			Volume: filteredUpdater.DisplayImageFile.Volume,
-			Size:   filteredUpdater.DisplayImageFile.Size,
-			Type:   filteredUpdater.DisplayImageFile.Type,
+			Path:        *path,
+			Volume:      filteredUpdater.DisplayImageFile.Volume,
+			Size:        filteredUpdater.DisplayImageFile.Size,
+			ContentType: filteredUpdater.DisplayImageFile.ContentType,
 		}
 	}
 	if filteredUpdater.CompletionFile != nil {
-		path, err := c.storeFile(ctx, "commission", fmt.Sprintf("comm-prod-%v", uuid.NewString()), *filteredUpdater.CompletionFile)
+		path, err := c.imageRepo.SaveFile(ctx, *filteredUpdater.CompletionFile, model2.FileTypeCompletion)
 		if err != nil {
 			return model.CommissionErrorUnknown
 		}
@@ -184,9 +188,9 @@ func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, m
 		return model.CommissionErrorNotAllowSendMessage
 	}
 	if msgCreator.Image != nil {
-		storedPaths, err := c.storeImage(ctx, "messages", "img-msg-"+msgCreator.CommissionID+"-"+uuid.NewString(), *msgCreator.Image)
+		path, err := c.imageRepo.SaveFile(ctx, msgCreator.Image.File, model2.FileTypeMessage)
 		if err == nil {
-			msgCreator.ImagePath = storedPaths
+			msgCreator.ImagePath = path
 		}
 	}
 	messaging := newMessagingFromUser(msgCreator, comm.ArtistID, comm.RequesterID)
@@ -204,49 +208,49 @@ func (c commissionUseCase) HandleOutBoundCommissionMessage(ctx context.Context, 
 }
 
 // Private
-func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []model4.ImageFile) (*[]string, error) {
-	if len(images) > 0 {
-		pathImages := make([]model2.PathImage, 0, len(images))
-		for _, refImage := range images {
-			pathImages = append(pathImages, model2.PathImage{
-				Path:  path + "/",
-				Name:  name,
-				Image: refImage,
-			})
-		}
-		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
-		if err == nil {
-			return &paths, nil
-		}
-	}
-	return nil, errors.New("storeRefImage failed")
-}
+//func (c commissionUseCase) storeImages(ctx context.Context, path string, name string, images []model4.ImageFile) (*[]string, error) {
+//	if len(images) > 0 {
+//		pathImages := make([]model4.ImageFile, 0, len(images))
+//		for _, refImage := range images {
+//			pathImages = append(pathImages, model2.PathImage{
+//				Path:  path + "/",
+//				Name:  name,
+//				Image: refImage,
+//			})
+//		}
+//		paths, err := c.imageRepo.SaveImages(ctx, pathImages)
+//		if err == nil {
+//			return &paths, nil
+//		}
+//	}
+//	return nil, errors.New("storeRefImage failed")
+//}
 
-func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image model4.ImageFile) (*string, error) {
-	pathImage := model2.PathImage{
-		Path:  path + "/",
-		Name:  name,
-		Image: image,
-	}
-	savedPath, err := c.imageRepo.SaveImage(ctx, pathImage)
-	if err != nil {
-		return nil, err
-	}
-	return savedPath, nil
-}
+//func (c commissionUseCase) storeImage(ctx context.Context, path string, name string, image model4.ImageFile) (*string, error) {
+//	pathImage := model2.PathImage{
+//		Path:  path + "/",
+//		Name:  name,
+//		Image: image,
+//	}
+//	savedPath, err := c.imageRepo.SaveImage(ctx, pathImage)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return savedPath, nil
+//}
 
-func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file model4.File) (*string, error) {
-	pathFile := model2.PathFile{
-		Path: path + "/",
-		Name: name,
-		File: file,
-	}
-	savedPath, err := c.imageRepo.SaveFile(ctx, pathFile)
-	if err != nil {
-		return nil, err
-	}
-	return savedPath, nil
-}
+//func (c commissionUseCase) storeFile(ctx context.Context, path string, name string, file model4.File) (*string, error) {
+//	pathFile := model2.PathFile{
+//		Path: path + "/",
+//		Name: name,
+//		File: file,
+//	}
+//	savedPath, err := c.imageRepo.SaveFile(ctx, pathFile)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return savedPath, nil
+//}
 
 func (c commissionUseCase) getCommValidationOpenCommUpdater(history []model.CommissionValidation, updater model.CommissionUpdater, validation model.CommissionOpenCommissionValidation) model.CommissionUpdater {
 	v := model.CommissionValidationOpenCommission

@@ -2,11 +2,10 @@ package image
 
 import (
 	"context"
-	"pixstall-commission/domain/image/model"
+	model2 "pixstall-commission/domain/file/model"
 )
 
 type Repo interface {
-	SaveImage(ctx context.Context, pathImage model.PathImage) (*string, error)
-	SaveImages(ctx context.Context, pathImages []model.PathImage) ([]string, error)
-	SaveFile(ctx context.Context, pathFile model.PathFile) (*string, error)
+	SaveFile(ctx context.Context, file model2.File, fileType model2.FileType) (*string, error)
+	SaveFiles(ctx context.Context, files []model2.File, fileType model2.FileType) ([]string, error)
 }

@@ -6,25 +6,25 @@
 package main
 
 import (
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/mongo"
+	"google.golang.org/grpc"
 	"pixstall-commission/app/comm-msg-delivery/delivery/ws"
 	ws2 "pixstall-commission/app/comm-msg-delivery/repo/ws"
 	"pixstall-commission/app/commission/delivery/http"
 	rabbitmq2 "pixstall-commission/app/commission/delivery/rabbitmq"
 	mongo2 "pixstall-commission/app/commission/repo/mongo"
 	"pixstall-commission/app/commission/usecase"
-	"pixstall-commission/app/image/aws-s3"
+	grpc2 "pixstall-commission/app/image/grpc"
 	mongo3 "pixstall-commission/app/message/repo/mongo"
 	"pixstall-commission/app/msg-broker/repo/rabbitmq"
 )
 
 // Injectors from wire.go:
 
-func InitCommissionMessageController(db *mongo.Database, awsS3 *s3.S3, conn *amqp.Connection, hub *ws.Hub) ws.CommissionMessageController {
+func InitCommissionMessageController(db *mongo.Database, grpcConn *grpc.ClientConn, conn *amqp.Connection, hub *ws.Hub) ws.CommissionMessageController {
 	repo := mongo2.NewMongoCommissionRepo(db)
-	imageRepo := aws_s3.NewAWSS3ImageRepository(awsS3)
+	imageRepo := grpc2.NewGRPCImageRepository(grpcConn)
 	msg_brokerRepo := rabbitmq.NewRabbitMQMsgBrokerRepo(conn)
 	messageRepo := mongo3.NewMongoMessageRepo(db)
 	comm_msg_deliveryRepo := ws2.NewWSCommMsgDeliveryRepo(hub)
@@ -33,9 +33,9 @@ func InitCommissionMessageController(db *mongo.Database, awsS3 *s3.S3, conn *amq
 	return commissionMessageController
 }
 
-func InitCommissionController(db *mongo.Database, awsS3 *s3.S3, conn *amqp.Connection, hub *ws.Hub) http.CommissionController {
+func InitCommissionController(db *mongo.Database, grpcConn *grpc.ClientConn, conn *amqp.Connection, hub *ws.Hub) http.CommissionController {
 	repo := mongo2.NewMongoCommissionRepo(db)
-	imageRepo := aws_s3.NewAWSS3ImageRepository(awsS3)
+	imageRepo := grpc2.NewGRPCImageRepository(grpcConn)
 	msg_brokerRepo := rabbitmq.NewRabbitMQMsgBrokerRepo(conn)
 	messageRepo := mongo3.NewMongoMessageRepo(db)
 	comm_msg_deliveryRepo := ws2.NewWSCommMsgDeliveryRepo(hub)
@@ -44,9 +44,9 @@ func InitCommissionController(db *mongo.Database, awsS3 *s3.S3, conn *amqp.Conne
 	return commissionController
 }
 
-func InitCommissionMessageBroker(db *mongo.Database, conn *amqp.Connection, awsS3 *s3.S3, hub *ws.Hub) rabbitmq2.CommissionMessageBroker {
+func InitCommissionMessageBroker(db *mongo.Database, conn *amqp.Connection, grpcConn *grpc.ClientConn, hub *ws.Hub) rabbitmq2.CommissionMessageBroker {
 	repo := mongo2.NewMongoCommissionRepo(db)
-	imageRepo := aws_s3.NewAWSS3ImageRepository(awsS3)
+	imageRepo := grpc2.NewGRPCImageRepository(grpcConn)
 	msg_brokerRepo := rabbitmq.NewRabbitMQMsgBrokerRepo(conn)
 	messageRepo := mongo3.NewMongoMessageRepo(db)
 	comm_msg_deliveryRepo := ws2.NewWSCommMsgDeliveryRepo(hub)

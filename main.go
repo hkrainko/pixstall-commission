@@ -2,16 +2,12 @@ package main
 
 import (
 	"context"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"google.golang.org/grpc"
 	"log"
 	"pixstall-commission/app/comm-msg-delivery/delivery/ws"
 	"pixstall-commission/app/middleware"
@@ -21,22 +17,6 @@ import (
 func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-
-	//AWS s3
-	awsAccessKey := "AKIA5BWICLKRWX6ARSEF"
-	awsSecret := "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"
-	token := ""
-	creds := credentials.NewStaticCredentials(awsAccessKey, awsSecret, token)
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		Config: aws.Config{
-			Region:                        aws.String(endpoints.ApEast1RegionID),
-			CredentialsChainVerboseErrors: aws.Bool(true),
-			Credentials:                   creds,
-		},
-		//Profile:                 "default", //[default], use [prod], [uat]
-		//SharedConfigState:       session.SharedConfigEnable,
-	}))
-	awsS3 := s3.New(sess)
 
 	//Mongo
 	dbClient, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
@@ -53,6 +33,13 @@ func main() {
 
 	// WebSocket
 	hub := ws.NewHub()
+
+	//gRPC
+	grpcConn, err := grpc.Dial("localhost:50052", grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer grpcConn.Close()
 
 	//RabbitMQ
 	rbMQConn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
@@ -89,7 +76,7 @@ func main() {
 		log.Fatalf("Failed to create exchange %v", err)
 	}
 
-	commMsgBroker := InitCommissionMessageBroker(db, rbMQConn, awsS3, hub)
+	commMsgBroker := InitCommissionMessageBroker(db, rbMQConn, grpcConn, hub)
 	go commMsgBroker.StartUpdateCommissionQueue()
 	go commMsgBroker.StartCommissionValidatedQueue()
 	go commMsgBroker.StartCommissionMessageDeliverQueue()
@@ -111,7 +98,7 @@ func main() {
 	userIDExtractor := middleware.NewJWTPayloadsExtractor([]string{"userId"})
 
 	{
-		ctrl := InitCommissionMessageController(db, awsS3, rbMQConn, hub)
+		ctrl := InitCommissionMessageController(db, grpcConn, rbMQConn, hub)
 		go ctrl.Run()
 		//r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWT, func(c *gin.Context) {ws.ServeWS(hub, c)})
 		r.GET("/ws", userIDExtractor.ExtractPayloadsFromJWTInQuery, ctrl.HandleConnection)
@@ -120,7 +107,7 @@ func main() {
 	apiGroup := r.Group("/api")
 	commissionGroup := apiGroup.Group("/commissions")
 	{
-		ctrl := InitCommissionController(db, awsS3, rbMQConn, hub)
+		ctrl := InitCommissionController(db, grpcConn, rbMQConn, hub)
 		commissionGroup.GET("", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommissions)
 		commissionGroup.GET("/:id", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommission)
 		commissionGroup.GET("/:id/details", userIDExtractor.ExtractPayloadsFromJWTInHeader, ctrl.GetCommissionDetails)
