@@ -40,7 +40,7 @@ func NewCommissionUseCase(
 func (c commissionUseCase) AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error) {
 	// Upload
 	files := func(f []model2.ImageFile) []model2.File {
-		result := make([]model2.File, len(f))
+		var result []model2.File
 		for _, v := range f {
 			result = append(result, v.File)
 		}
