@@ -19,7 +19,7 @@ type Message struct {
 	RequesterID     string       `json:"requesterId" bson:"requesterId"`
 	CommissionID    string       `json:"commissionId" bson:"commissionId"`
 	CreateTime      time.Time    `json:"createTime" bson:"createTime"`
-	LastUpdatedTime time.Time    `json:"completeTime" bson:"completeTime"`
+	LastUpdatedTime time.Time    `json:"lastUpdatedTime" bson:"lastUpdatedTime"`
 	State           MessageState `json:"state" bson:"state"`
 	MessageType     MessageType  `json:"messageType" bson:"messageType"`
 }

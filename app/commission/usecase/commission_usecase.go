@@ -11,6 +11,7 @@ import (
 	"pixstall-commission/domain/message"
 	model3 "pixstall-commission/domain/message/model"
 	msgBroker "pixstall-commission/domain/msg-broker"
+	"time"
 )
 
 type commissionUseCase struct {
@@ -130,15 +131,15 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 		return err
 	}
 
-	//if *filteredUpdater.State == model.CommissionStateCompleted {
-	//	comm, err := c.commRepo.GetCommission(ctx, updater.ID)
-	//	if err == nil {
-	//		err = c.msgBrokerRepo.SendCommissionCompletedMessage(ctx, *comm)
-	//		if err != nil {
-	//			// TODO: send the message later
-	//		}
-	//	}
-	//}
+	if *filteredUpdater.State == model.CommissionStateCompleted {
+		comm, err := c.commRepo.GetCommission(ctx, updater.ID)
+		if err == nil && !comm.BePrivate && comm.DisplayImage != nil {
+			err = c.msgBrokerRepo.SendCommissionCompletedMessage(ctx, *comm)
+			if err != nil {
+				// TODO: send the message later
+			}
+		}
+	}
 	msg, err := NewSystemMessage(decision, *comm, *filteredUpdater)
 	if err == nil {
 		err = c.msgRepo.AddNewMessage(ctx, nil, msg)
@@ -325,14 +326,16 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 	case model.CommissionDecisionArtistUploadProduct:
 		state := model.CommissionStatePendingRequesterAcceptProduct
 		result.State = &state
-		result.DisplayImage = updater.DisplayImage
+		result.DisplayImageFile = updater.DisplayImageFile
 		result.CompletionFile = updater.CompletionFile
 		return &result, nil
 	case model.CommissionDecisionRequesterAcceptProduct:
+		now := time.Now()
 		state := model.CommissionStateCompleted
 		result.State = &state
 		result.Rating = updater.Rating
 		result.Comment = updater.Comment
+		result.CompletedTime = &now
 		return &result, nil
 	}
 	return nil, model.CommissionErrorDecisionNotAllowed

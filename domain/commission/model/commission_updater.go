@@ -14,7 +14,7 @@ type CommissionUpdater struct {
 	TimesAllowedDraftToChange      *int       `json:"timesAllowedDraftToChange"`
 	TimesAllowedCompletionToChange *int       `json:"timesAllowedCompletionToChange"`
 	CompletionRevisionRequestTime  *int       `json:"completionRevisionRequestTime"`
-	CompleteTime                   *time.Time `json:"completeTime"`
+	CompletedTime                  *time.Time `json:"completedTime"`
 	Validation                     *CommissionValidation
 	State                          *CommissionState `json:"state"`
 	Rating                         *int             `json:"rating"`

@@ -37,9 +37,9 @@ type Commission struct {
 
 	ProofCopyImagePaths []string `json:"proofCopyImagePaths" bson:"proofCopyImagePaths"`
 
-	StartTime    *time.Time    `json:"startTime,omitempty" bson:"startTime,omitempty"`
-	CompleteTime *time.Time    `json:"completeTime,omitempty" bson:"completeTime,omitempty"`
-	DisplayImage *DisplayImage `json:"displayImage,omitempty" bson:"displayImage,omitempty"`
+	StartTime     *time.Time    `json:"startTime,omitempty" bson:"startTime,omitempty"`
+	CompletedTime *time.Time    `json:"completedTime,omitempty" bson:"completedTime,omitempty"`
+	DisplayImage  *DisplayImage `json:"displayImage,omitempty" bson:"displayImage,omitempty"`
 
 	CompletionFilePath *string `json:"completionFilePath,omitempty" bson:"completionFilePath,omitempty"`
 	Rating             *int    `json:"rating,omitempty" bson:"rating,omitempty"`

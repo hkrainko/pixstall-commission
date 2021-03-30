@@ -9,7 +9,7 @@ type Message struct {
 	ID              string             `bson:"id"`
 	CommissionID    string             `bson:"commissionId"`
 	CreateTime      time.Time          `bson:"createTime"`
-	LastUpdatedTime time.Time          `bson:"completeTime"`
+	LastUpdatedTime time.Time          `bson:"lastUpdatedTime"`
 	State           model.MessageState `bson:"state"`
 	MessageType     model.MessageType  `bson:"messageType"`
 
