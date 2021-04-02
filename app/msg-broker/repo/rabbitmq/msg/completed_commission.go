@@ -25,6 +25,7 @@ type CompletedCommission struct {
 	Rating             int                `json:"rating"`
 	Comment            *string            `json:"comment,omitempty"`
 
+	StartTime     time.Time `json:"startTime"`
 	CreateTime    time.Time `json:"createTime" bson:"createTime"`
 	CompletedTime time.Time `json:"completedTime" bson:"completedTime,omitempty"`
 }
@@ -49,8 +50,9 @@ func NewCompletedCommission(comm model.Commission) CompletedCommission {
 		CompletionFilePath:   *comm.CompletionFilePath,
 		Rating:               *comm.Rating,
 		Comment:              comm.Comment,
+		StartTime:            *comm.StartTime,
 		CreateTime:           comm.CreateTime,
-		CompletedTime:         *comm.CompletedTime,
+		CompletedTime:        *comm.CompletedTime,
 	}
 
 }
