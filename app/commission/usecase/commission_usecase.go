@@ -297,7 +297,9 @@ func (c commissionUseCase) getFilteredUpdater(userID string, comm model.Commissi
 		result.State = &state
 		return &result, nil
 	case model.CommissionDecisionArtistAccept:
+		now := time.Now()
 		state := model.CommissionStateInProgress
+		result.StartTime = &now
 		result.State = &state
 		return &result, nil
 	case model.CommissionDecisionArtistDecline:

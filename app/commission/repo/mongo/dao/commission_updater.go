@@ -24,6 +24,9 @@ func NewUpdaterFromCommissionUpdater(d model.CommissionUpdater) bson.D {
 	if d.CompletionRevisionRequestTime != nil {
 		setter = append(setter, bson.E{Key: "completionRevisionRequestTime", Value: d.CompletionRevisionRequestTime})
 	}
+	if d.StartTime != nil {
+		setter = append(setter, bson.E{Key: "startTime", Value: d.StartTime})
+	}
 	if d.CompletedTime != nil {
 		setter = append(setter, bson.E{Key: "completedTime", Value: d.CompletedTime})
 	}
