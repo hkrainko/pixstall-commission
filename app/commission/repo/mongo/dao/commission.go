@@ -81,6 +81,7 @@ func (c Commission) ToDomainCommission() model.Commission {
 		CompletionFilePath:           c.CompletionFilePath,
 		Rating:                       c.Rating,
 		Comment:                      c.Comment,
+		StartTime:                    c.StartTime,
 		CreateTime:                   c.CreateTime,
 		CompletedTime:                c.CompletedTime,
 		LastUpdateTime:               c.LastUpdateTime,
