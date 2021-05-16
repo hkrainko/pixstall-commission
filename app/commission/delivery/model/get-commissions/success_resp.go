@@ -7,13 +7,15 @@ type Response struct {
 	Commissions []model.Commission `json:"commissions"`
 	Offset      int                `json:"offSet"`
 	Count       int                `json:"count"`
+	Total       int                `json:"total"`
 }
 
-func NewResponse(requesterId string, dCommissions []model.Commission, offset int, count int) *Response {
+func NewResponse(requesterId string, result model.GetCommissionsResult, offset int) *Response {
 	return &Response{
 		RequesterId: requesterId,
-		Commissions: dCommissions,
-		Offset: offset,
-		Count: count,
+		Commissions: result.Commissions,
+		Offset:      offset,
+		Count:       len(result.Commissions),
+		Total:       result.Total,
 	}
 }

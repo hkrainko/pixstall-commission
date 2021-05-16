@@ -50,12 +50,12 @@ func (c CommissionController) GetCommissions(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-	commissions, err := c.commUseCase.GetCommissions(ctx, *filter, *sorter)
+	result, err := c.commUseCase.GetCommissions(ctx, *filter, *sorter)
 	if err != nil {
 		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *commissions, filter.Offset, filter.Count))
+	ctx.JSON(http.StatusOK, get_commissions.NewResponse(tokenUserID, *result, filter.Offset))
 }
 
 func (c CommissionController) GetCommission(ctx *gin.Context) {

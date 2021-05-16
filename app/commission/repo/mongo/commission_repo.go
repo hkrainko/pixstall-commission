@@ -61,28 +61,50 @@ func (m mongoCommissionRepo) GetCommission(ctx context.Context, commId string) (
 	return &dComm, nil
 }
 
-func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.CommissionFilter, sorter dModel.CommissionSorter) (*[]dModel.Commission, error) {
-	daoFilter := dao.NewFilterFromDomainCommissionFilter(filter)
-	opts := options.FindOptions{}
-	os := int64(filter.Offset)
-	opts.Skip = &os
-	c := int64(filter.Count)
-	opts.Limit = &c
+func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.CommissionFilter, sorter dModel.CommissionSorter) (*dModel.GetCommissionsResult, error) {
+	//daoFilter := dao.NewFilterFromDomainCommissionFilter(filter) // TODO: Change to aggregate filter
 
-	cursor, err := m.collection.Find(ctx, daoFilter, &opts)
+	var pipeline []bson.M
+	if filter.ArtistID != nil {
+		//For querying received commissions
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"artistId": filter.ArtistID}})
+	} else if filter.RequesterID != nil {
+		// For querying submitted commissions
+		pipeline = append(pipeline, bson.M{"$match": bson.M{"requesterId": filter.RequesterID}})
+	} else {
+		return nil, error2.UnknownError
+	}
+	pipeline = append(pipeline, bson.M{
+		"$facet": bson.M{
+			"total": []bson.M{{
+				"$count": "total",
+			}},
+			"commissions": bson.A{
+				bson.D{{"$skip", filter.Offset}},
+				bson.D{{"$limit", filter.Count}},
+			},
+		},
+	})
+	pipeline = append(pipeline, bson.M{
+		"$addFields": bson.M{
+			"total": bson.M{"$arrayElemAt": bson.A{"$total.total", 0}},
+		},
+	})
+
+	cursor, err := m.collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, dModel.CommissionErrorUnknown
 	}
 	defer cursor.Close(ctx)
-	var dComm []dModel.Commission
+	var getCommsResult *dModel.GetCommissionsResult
 	for cursor.Next(ctx) {
-		var r dao.Commission
+		var r dao.GetCommissionsResult
 		if err := cursor.Decode(&r); err != nil {
 			return nil, err
 		}
-		dComm = append(dComm, r.ToDomainCommission())
+		getCommsResult = r.ToDomainGetCommissionsResult(filter.Offset)
 	}
-	return &dComm, nil
+	return getCommsResult, nil
 }
 
 func (m mongoCommissionRepo) UpdateCommission(ctx context.Context, commUpdater dModel.CommissionUpdater) error {

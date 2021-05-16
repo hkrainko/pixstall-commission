@@ -8,9 +8,9 @@ import (
 
 type UseCase interface {
 	AddCommission(ctx context.Context, creator model.CommissionCreator) (*model.Commission, error)
-	GetCommissions(ctx context.Context, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error)
+	GetCommissions(ctx context.Context, filter model.CommissionFilter, sorter model.CommissionSorter) (*model.GetCommissionsResult, error)
 	GetCommission(ctx context.Context, commId string) (*model.Commission, error)
-	GetWorks(ctx context.Context, artistID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*[]model.Commission, error)
+	GetWorks(ctx context.Context, artistID string, filter model.CommissionFilter, sorter model.CommissionSorter) (*model.GetCommissionsResult, error)
 	UpdateCommission(ctx context.Context, updater model.CommissionUpdater) error
 	UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater, decision model.CommissionDecision) error
 	OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error
