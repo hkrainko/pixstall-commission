@@ -187,8 +187,8 @@ func (c commissionUseCase) UsersValidation(ctx context.Context, validation model
 	return c.commRepo.UpdateCommission(ctx, updater)
 }
 
-func (c commissionUseCase) GetMessages(ctx context.Context, userId string, commId string, offset int, count int) ([]model3.Messaging, error) {
-	return c.msgRepo.GetMessages(ctx, userId, commId, offset, count)
+func (c commissionUseCase) GetMessages(ctx context.Context, userId string, filter model3.MessageFilter) ([]model3.Messaging, error) {
+	return c.msgRepo.GetMessages(ctx, userId, filter)
 }
 
 func (c commissionUseCase) HandleInboundCommissionMessage(ctx context.Context, msgCreator model3.MessageCreator) error {

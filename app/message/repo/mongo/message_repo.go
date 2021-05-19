@@ -4,7 +4,6 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	dao2 "pixstall-commission/app/commission/repo/mongo/dao"
 	"pixstall-commission/app/message/repo/mongo/dao"
 	dError "pixstall-commission/domain/error"
@@ -41,20 +40,55 @@ func (m mongoMessageRepo) AddNewMessage(ctx context.Context, userId *string, mes
 	return nil
 }
 
-func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, commId string, offset int, count int) ([]model.Messaging, error) {
-	filter := bson.M{"id": commId}
-	opts := options.FindOneOptions{
-		Projection: bson.M{
-			"id":          1,
-			"artistId":    1,
-			"requesterId": 1,
-			"messages":    bson.M{"$slice": []int{offset, count}},
-			"state":       1,
+func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter model.MessageFilter) ([]model.Messaging, error) {
+	var pipeline []bson.M
+	pipeline = append(pipeline, bson.M{
+		"$and": bson.D{
+			bson.E{Key: "$match", Value: bson.M{"id": filter.CommissionID}},
+			bson.E{Key: "$or", Value: bson.D{
+				bson.E{Key: "$match", Value: bson.M{"artistId": userId}},
+				bson.E{Key: "$match", Value: bson.M{"requesterId": userId}},
+			}},
 		},
+	})
+	if filter.LastMessageID != nil {
+		pipeline = append(pipeline, bson.M{
+			"$project": bson.M{
+				"id": 1,
+				"artistId": 1,
+				"requesterId": 1,
+				"messages": bson.M{
+					"$slice": bson.A {
+						"$messages",
+						bson.M {
+							"$indexOfArray": bson.A{
+								"$messages",
+								bson.M{"$messages.id": *filter.LastMessageID},
+							},
+						},
+						filter.Count * -1,
+					},
+				},
+				"state": 1,
+			}})
+	} else {
+		pipeline = append(pipeline, bson.M{
+			"$project": bson.M{
+				"id": 1,
+				"artistId": 1,
+				"requesterId": 1,
+				"messages": bson.M{
+					"$slice": bson.A {
+						"$messages",
+						filter.Count * -1,
+					},
+				},
+				"state": 1,
+			}})
 	}
 
-	var comm dao2.Commission
-	err := m.collection.FindOne(ctx, filter, &opts).Decode(&comm)
+	cursor, err := m.collection.Aggregate(ctx, pipeline)
+	defer cursor.Close(ctx)
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:
@@ -63,6 +97,13 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, commId
 			return nil, dError.UnknownError
 		}
 	}
+	var comm dao2.Commission
+	for cursor.Next(ctx) {
+		if err := cursor.Decode(&comm); err != nil {
+			return nil, err
+		}
+	}
+
 	var dMessagings []model.Messaging
 	for _, daoMsg := range comm.Messages {
 		dMessagings = append(dMessagings, daoMsg.ToDomainMessaging(comm.ArtistID, comm.RequesterID))

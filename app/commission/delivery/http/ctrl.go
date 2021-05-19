@@ -92,23 +92,25 @@ func (c CommissionController) GetMessages(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(get_commissions.NewErrorResponse(model.CommissionErrorUnAuth))
 		return
 	}
-	offset, err := strconv.Atoi(ctx.Query("offset"))
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
-		return
+	
+	filter := model2.MessageFilter{
+		CommissionID:  commID,
+	}
+	if lastMsgID, exist := ctx.GetQuery("lastMsgId"); exist {
+		filter.LastMessageID = &lastMsgID
 	}
 	count, err := strconv.Atoi(ctx.Query("count"))
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, nil)
 		return
 	}
-
-	msgs, err := c.commUseCase.GetMessages(ctx, tokenUserID, commID, offset, count)
+	filter.Count = count
+	msgs, err := c.commUseCase.GetMessages(ctx, tokenUserID, filter)
 	if err != nil {
 		ctx.AbortWithStatusJSON(get_messages.NewErrorResponse(err))
 		return
 	}
-	ctx.JSON(http.StatusOK, get_messages.NewResponse(commID, msgs))
+	ctx.JSON(http.StatusOK, get_messages.NewResponse(commID, filter.LastMessageID, msgs))
 }
 
 func (c CommissionController) CreateMessage(ctx *gin.Context) {

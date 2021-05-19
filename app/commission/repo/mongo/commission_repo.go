@@ -92,10 +92,10 @@ func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.C
 	})
 
 	cursor, err := m.collection.Aggregate(ctx, pipeline)
+	defer cursor.Close(ctx)
 	if err != nil {
 		return nil, dModel.CommissionErrorUnknown
 	}
-	defer cursor.Close(ctx)
 	var getCommsResult *dModel.GetCommissionsResult
 	for cursor.Next(ctx) {
 		var r dao.GetCommissionsResult

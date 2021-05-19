@@ -15,7 +15,7 @@ type UseCase interface {
 	UpdateCommissionByUser(ctx context.Context, userId string, updater model.CommissionUpdater, decision model.CommissionDecision) error
 	OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error
 	UsersValidation(ctx context.Context, validation model.CommissionUsersValidation) error
-	GetMessages(ctx context.Context, userId string, commId string, offset int, count int) ([]dMsgModel.Messaging, error)
+	GetMessages(ctx context.Context, userId string, filter dMsgModel.MessageFilter) ([]dMsgModel.Messaging, error)
 	HandleInboundCommissionMessage(ctx context.Context, msgCreator dMsgModel.MessageCreator) error
 	HandleOutBoundCommissionMessage(ctx context.Context, message dMsgModel.Messaging) error
 }

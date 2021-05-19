@@ -5,13 +5,15 @@ import (
 )
 
 type Response struct {
-	CommissionID string             `json:"commissionId"`
-	Messages     []model2.Messaging `json:"messages"`
+	CommissionID  string             `json:"commissionId"`
+	LastMessageID *string            `json:"lastMessageId,omitempty"`
+	Messages      []model2.Messaging `json:"messages"`
 }
 
-func NewResponse(commID string, msgs []model2.Messaging) *Response {
+func NewResponse(commID string, lastMessageID *string, msgs []model2.Messaging) *Response {
 	return &Response{
-		CommissionID: commID,
-		Messages:     msgs,
+		CommissionID:  commID,
+		LastMessageID: lastMessageID,
+		Messages:      msgs,
 	}
 }
