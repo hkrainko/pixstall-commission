@@ -96,7 +96,7 @@ func (c CommissionController) GetMessages(ctx *gin.Context) {
 	filter := model2.MessageFilter{
 		CommissionID:  commID,
 	}
-	if lastMsgID, exist := ctx.GetQuery("lastMsgId"); exist {
+	if lastMsgID, exist := ctx.GetQuery("lastMessageId"); exist {
 		filter.LastMessageID = &lastMsgID
 	}
 	count, err := strconv.Atoi(ctx.Query("count"))
