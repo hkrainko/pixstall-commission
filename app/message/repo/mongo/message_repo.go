@@ -43,12 +43,14 @@ func (m mongoMessageRepo) AddNewMessage(ctx context.Context, userId *string, mes
 func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter model.MessageFilter) ([]model.Messaging, error) {
 	var pipeline []bson.M
 	pipeline = append(pipeline, bson.M{
-		"$and": bson.D{
-			bson.E{Key: "$match", Value: bson.M{"id": filter.CommissionID}},
-			bson.E{Key: "$or", Value: bson.D{
-				bson.E{Key: "$match", Value: bson.M{"artistId": userId}},
-				bson.E{Key: "$match", Value: bson.M{"requesterId": userId}},
-			}},
+		"$match": bson.M{
+			"$and": bson.A{
+				bson.M{"id": filter.CommissionID},
+				bson.M{"$or": bson.A{
+					bson.M{"artistId": userId},
+					bson.M{"requesterId": userId},
+				}},
+			},
 		},
 	})
 	if filter.LastMessageID != nil {
@@ -88,7 +90,6 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter
 	}
 
 	cursor, err := m.collection.Aggregate(ctx, pipeline)
-	defer cursor.Close(ctx)
 	if err != nil {
 		switch err {
 		case mongo.ErrNoDocuments:
@@ -97,6 +98,7 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter
 			return nil, dError.UnknownError
 		}
 	}
+	defer cursor.Close(ctx)
 	var comm dao2.Commission
 	for cursor.Next(ctx) {
 		if err := cursor.Decode(&comm); err != nil {
