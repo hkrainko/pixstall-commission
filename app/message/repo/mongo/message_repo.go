@@ -106,7 +106,7 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter
 		}
 	}
 
-	var dMessagings []model.Messaging
+	dMessagings := make([]model.Messaging, 0)
 	for _, daoMsg := range comm.Messages {
 		dMessagings = append(dMessagings, daoMsg.ToDomainMessaging(comm.ArtistID, comm.RequesterID))
 	}
