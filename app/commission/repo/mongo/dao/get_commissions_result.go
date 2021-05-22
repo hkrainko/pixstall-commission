@@ -8,7 +8,7 @@ type GetCommissionsResult struct {
 }
 
 func (g GetCommissionsResult) ToDomainGetCommissionsResult(offset int) *model.GetCommissionsResult {
-	var dComms []model.Commission
+	dComms := make([]model.Commission, 0)
 	for _, comm := range g.Commissions {
 		dComms = append(dComms, comm.ToDomainCommission())
 	}
