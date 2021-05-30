@@ -63,12 +63,17 @@ func (m mongoMessageRepo) GetMessages(ctx context.Context, userId string, filter
 					"$slice": bson.A {
 						"$messages",
 						bson.M {
-							"$indexOfArray": bson.A{
-								"$messages",
-								bson.M{"$messages.id": *filter.LastMessageID},
+							"$subtract": bson.A{
+								bson.M{
+									"$indexOfArray": bson.A{
+										"$messages",
+										bson.M{"id": *filter.LastMessageID},
+									},// TODO: bug here
+								},
+								filter.Count * -1,
 							},
 						},
-						filter.Count * -1,
+						filter.Count,
 					},
 				},
 				"state": 1,
