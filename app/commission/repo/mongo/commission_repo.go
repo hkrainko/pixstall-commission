@@ -102,7 +102,7 @@ func (m mongoCommissionRepo) GetCommissions(ctx context.Context, filter dModel.C
 		if err := cursor.Decode(&r); err != nil {
 			return nil, err
 		}
-		getCommsResult = r.ToDomainGetCommissionsResult(filter.Offset)
+		getCommsResult = r.ToDomainGetCommissionsResult()
 	}
 	return getCommsResult, nil
 }

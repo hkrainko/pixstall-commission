@@ -7,7 +7,7 @@ type GetCommissionsResult struct {
 	Total       int          `bson:"total"`
 }
 
-func (g GetCommissionsResult) ToDomainGetCommissionsResult(offset int) *model.GetCommissionsResult {
+func (g GetCommissionsResult) ToDomainGetCommissionsResult() *model.GetCommissionsResult {
 	dComms := make([]model.Commission, 0)
 	for _, comm := range g.Commissions {
 		dComms = append(dComms, comm.ToDomainCommission())
