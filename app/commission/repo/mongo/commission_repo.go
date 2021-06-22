@@ -121,32 +121,39 @@ func (m mongoCommissionRepo) UpdateCommission(ctx context.Context, commUpdater d
 }
 
 func (m mongoCommissionRepo) UpdateCommissionUser(ctx context.Context, updater model2.UserUpdater) error {
-	filter := bson.M{
-		"$or": bson.A{bson.M{"artistId": updater.UserID}, bson.M{"requesterId": updater.UserID}},
+	filter := bson.M{"artistId": updater.UserID}
+	updateContent := bson.M{}
+	if updater.UserName != nil {
+		updateContent["artistName"] = updater.UserName
 	}
-	update := bson.M{
-		"$cond": getUpdateCommissionUserCondition(updater),
+	if updater.ProfilePath != nil {
+		updateContent["artistProfilePath"] = updater.ProfilePath
 	}
+	update := bson.M{"$set": updateContent}
+
 	result, err := m.collection.UpdateMany(ctx, filter, update)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return err
 	}
-	fmt.Printf("UpdateCommissionUser count:%v\n", result.MatchedCount)
-	return nil
-}
+	fmt.Printf("UpdateCommissionUser aritst count:%v\n", result.MatchedCount)
 
-func getUpdateCommissionUserCondition(updater model2.UserUpdater) bson.M {
-	result := bson.M{}
-	result["if"] = bson.M{"artistId": updater.UserID}
-
+	filter = bson.M{"requesterId": updater.UserID}
+	updateContent = bson.M{}
 	if updater.UserName != nil {
-		result["then"] = bson.M{"$set": bson.M{"artistName": updater.UserName}}
-		result["else"] = bson.M{"$set": bson.M{"requesterName": updater.UserName}}
+		updateContent["requesterName"] = updater.UserName
 	}
 	if updater.ProfilePath != nil {
-		result["then"] = bson.M{"$set": bson.M{"artistProfilePath": updater.ProfilePath}}
-		result["else"] = bson.M{"$set": bson.M{"requesterProfilePath": updater.ProfilePath}}
+		updateContent["requesterProfilePath"] = updater.ProfilePath
 	}
-	return result
+	update = bson.M{"$set": updateContent}
+
+	result, err = m.collection.UpdateMany(ctx, filter, update)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return err
+	}
+	fmt.Printf("UpdateCommissionUser requester count:%v\n", result.MatchedCount)
+
+	return nil
 }
