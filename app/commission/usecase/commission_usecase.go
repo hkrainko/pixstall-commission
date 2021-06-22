@@ -11,6 +11,7 @@ import (
 	"pixstall-commission/domain/message"
 	model3 "pixstall-commission/domain/message/model"
 	msgBroker "pixstall-commission/domain/msg-broker"
+	model4 "pixstall-commission/domain/user/model"
 	"time"
 )
 
@@ -149,6 +150,10 @@ func (c commissionUseCase) UpdateCommissionByUser(ctx context.Context, userId st
 	}
 	//Ignore the error from sending message as we only care the state changed
 	return nil
+}
+
+func (c commissionUseCase) UpdateCommissionByUserUpdatedEvent(ctx context.Context, updater model4.UserUpdater) error {
+	return c.commRepo.UpdateCommissionUser(ctx, updater)
 }
 
 func (c commissionUseCase) OpenCommissionValidation(ctx context.Context, validation model.CommissionOpenCommissionValidation) error {

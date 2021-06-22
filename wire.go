@@ -16,6 +16,7 @@ import (
 	grpc_repo "pixstall-commission/app/image/grpc"
 	msg_repo "pixstall-commission/app/message/repo/mongo"
 	msg_broker_repo "pixstall-commission/app/msg-broker/repo/rabbitmq"
+	user_deli_rabbitmq "pixstall-commission/app/user/delivery/rabbitmq"
 )
 
 func InitCommissionMessageController(db *mongo.Database, grpcConn *grpc.ClientConn, conn *amqp.Connection, hub *ws.Hub) ws.CommissionMessageController {
@@ -55,4 +56,17 @@ func InitCommissionMessageBroker(db *mongo.Database, conn *amqp.Connection, grpc
 		comm_msg_deli_repo.NewWSCommMsgDeliveryRepo,
 	)
 	return comm_deli_rabbitmq.CommissionMessageBroker{}
+}
+
+func InitUserMessageBroker(db *mongo.Database, conn *amqp.Connection, grpcConn *grpc.ClientConn, hub *ws.Hub) user_deli_rabbitmq.UserMessageBroker {
+	wire.Build(
+		user_deli_rabbitmq.NewUserMessageBroker,
+		usecase.NewCommissionUseCase,
+		comm_repo.NewMongoCommissionRepo,
+		grpc_repo.NewGRPCImageRepository,
+		msg_broker_repo.NewRabbitMQMsgBrokerRepo,
+		msg_repo.NewMongoMessageRepo,
+		comm_msg_deli_repo.NewWSCommMsgDeliveryRepo,
+	)
+	return user_deli_rabbitmq.UserMessageBroker{}
 }

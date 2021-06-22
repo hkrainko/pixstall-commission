@@ -18,6 +18,7 @@ import (
 	grpc2 "pixstall-commission/app/image/grpc"
 	mongo3 "pixstall-commission/app/message/repo/mongo"
 	"pixstall-commission/app/msg-broker/repo/rabbitmq"
+	rabbitmq3 "pixstall-commission/app/user/delivery/rabbitmq"
 )
 
 // Injectors from wire.go:
@@ -53,4 +54,15 @@ func InitCommissionMessageBroker(db *mongo.Database, conn *amqp.Connection, grpc
 	useCase := usecase.NewCommissionUseCase(repo, imageRepo, msg_brokerRepo, messageRepo, comm_msg_deliveryRepo)
 	commissionMessageBroker := rabbitmq2.NewCommissionMessageBroker(useCase, conn)
 	return commissionMessageBroker
+}
+
+func InitUserMessageBroker(db *mongo.Database, conn *amqp.Connection, grpcConn *grpc.ClientConn, hub *ws.Hub) rabbitmq3.UserMessageBroker {
+	repo := mongo2.NewMongoCommissionRepo(db)
+	imageRepo := grpc2.NewGRPCImageRepository(grpcConn)
+	msg_brokerRepo := rabbitmq.NewRabbitMQMsgBrokerRepo(conn)
+	messageRepo := mongo3.NewMongoMessageRepo(db)
+	comm_msg_deliveryRepo := ws2.NewWSCommMsgDeliveryRepo(hub)
+	useCase := usecase.NewCommissionUseCase(repo, imageRepo, msg_brokerRepo, messageRepo, comm_msg_deliveryRepo)
+	userMessageBroker := rabbitmq3.NewUserMessageBroker(useCase, conn)
+	return userMessageBroker
 }

@@ -10,6 +10,7 @@ import (
 	"pixstall-commission/domain/commission"
 	dModel "pixstall-commission/domain/commission/model"
 	error2 "pixstall-commission/domain/error"
+	model2 "pixstall-commission/domain/user/model"
 )
 
 type mongoCommissionRepo struct {
@@ -117,4 +118,35 @@ func (m mongoCommissionRepo) UpdateCommission(ctx context.Context, commUpdater d
 		return dModel.CommissionErrorUnknown
 	}
 	return nil
+}
+
+func (m mongoCommissionRepo) UpdateCommissionUser(ctx context.Context, updater model2.UserUpdater) error {
+	filter := bson.M{
+		"$or": bson.A{bson.M{"artistId": updater.UserID}, bson.M{"requesterId": updater.UserID}},
+	}
+	update := bson.M{
+		"$cond": getUpdateCommissionUserCondition(updater),
+	}
+	result, err := m.collection.UpdateMany(ctx, filter, update)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return err
+	}
+	fmt.Printf("UpdateCommissionUser count:%v\n", result.MatchedCount)
+	return nil
+}
+
+func getUpdateCommissionUserCondition(updater model2.UserUpdater) bson.M {
+	result := bson.M{}
+	result["if"] = bson.M{"artistId": updater.UserID}
+
+	if updater.UserName != nil {
+		result["then"] = bson.M{"$set": bson.M{"artistName": updater.UserName}}
+		result["else"] = bson.M{"$set": bson.M{"requesterName": updater.UserName}}
+	}
+	if updater.ProfilePath != nil {
+		result["then"] = bson.M{"$set": bson.M{"artistProfilePath": updater.ProfilePath}}
+		result["else"] = bson.M{"$set": bson.M{"requesterProfilePath": updater.ProfilePath}}
+	}
+	return result
 }

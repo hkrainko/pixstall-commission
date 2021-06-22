@@ -82,6 +82,10 @@ func main() {
 	go commMsgBroker.StartCommissionMessageDeliverQueue()
 	defer commMsgBroker.StopAllQueues()
 
+	userMsgBroker := InitUserMessageBroker(db, rbMQConn, grpcConn, hub)
+	go userMsgBroker.StartUserEventQueue()
+	defer userMsgBroker.StopAllQueues()
+
 	// Gin
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
